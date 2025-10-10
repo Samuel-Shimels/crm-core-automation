@@ -1,0 +1,120 @@
+<div>
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="text-2xl font-semibold">Contacts</h2>
+    <div>
+      <button class="btn btn-outline-secondary" id="refreshContacts">Refresh</button>
+      <button class="btn btn-primary" id="newContactBtn">New Contact</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-sm">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Phone</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="contactsTableBody"></tbody>
+        </table>
+      </div>
+      <div class="d-flex justify-content-between align-items-center">
+        <div>Page <span id="contactsPage">1</span> | Total: <span id="contactsTotalCount">0</span></div>
+        <div>
+          <button class="btn btn-sm btn-outline-secondary" id="prevPage">Prev</button>
+          <button class="btn btn-sm btn-outline-secondary" id="nextPage">Next</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="contactModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Contact</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-2"><input class="form-control" id="cFirst" placeholder="First name"></div>
+        <div class="mb-2"><input class="form-control" id="cLast" placeholder="Last name"></div>
+        <div class="mb-2"><input class="form-control" id="cEmail" placeholder="Email"></div>
+        <div class="mb-2"><input class="form-control" id="cPhone" placeholder="Phone"></div>
+        <input type="hidden" id="cId" />
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn btn-primary" id="saveContactBtn">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var page = 1; var pageSize = 10;
+  function load(){
+    google.script.run.withSuccessHandler(function(resp){
+      document.getElementById('contactsPage').textContent = String(page);
+      document.getElementById('contactsTotalCount').textContent = String(resp.total || 0);
+      var tb = document.getElementById('contactsTableBody'); tb.innerHTML = '';
+      (resp.rows || []).forEach(function(c){
+        var tr = document.createElement('tr');
+        var name = ((c.first_name||'') + ' ' + (c.last_name||'')).trim();
+        tr.innerHTML = '<td>'+name+'</td><td>'+(c.email||'')+'</td><td>'+(c.phone||'')+'</td>'+
+          '<td><button class="btn btn-sm btn-outline-primary edit-contact" data-id="'+(c.contact_id||'')+'">Edit</button></td>';
+        tb.appendChild(tr);
+      });
+      // Add event listeners to edit buttons
+      document.querySelectorAll('.edit-contact').forEach(function(btn){
+        btn.addEventListener('click', function(){
+          var id = this.getAttribute('data-id');
+          google.script.run.withSuccessHandler(function(contact){
+            if(contact){
+              document.getElementById('cId').value = contact.contact_id || '';
+              document.getElementById('cFirst').value = contact.first_name || '';
+              document.getElementById('cLast').value = contact.last_name || '';
+              document.getElementById('cEmail').value = contact.email || '';
+              document.getElementById('cPhone').value = contact.phone || '';
+              new bootstrap.Modal(document.getElementById('contactModal')).show();
+            }
+          }).getContactApi(id);
+        });
+      });
+    }).listContactsApi({page: page, pageSize: pageSize});
+  }
+  document.getElementById('refreshContacts').addEventListener('click', load);
+  document.getElementById('prevPage').addEventListener('click', function(){ if(page>1){page--; load();}});
+  document.getElementById('nextPage').addEventListener('click', function(){ page++; load(); });
+  document.getElementById('newContactBtn').addEventListener('click', function(){
+    document.getElementById('cId').value = '';
+    document.getElementById('cFirst').value = '';
+    document.getElementById('cLast').value = '';
+    document.getElementById('cEmail').value = '';
+    document.getElementById('cPhone').value = '';
+    new bootstrap.Modal(document.getElementById('contactModal')).show();
+  });
+  document.getElementById('saveContactBtn').addEventListener('click', function(){
+    var obj = {
+      contact_id: document.getElementById('cId').value || undefined,
+      first_name: document.getElementById('cFirst').value,
+      last_name: document.getElementById('cLast').value,
+      email: document.getElementById('cEmail').value,
+      phone: document.getElementById('cPhone').value
+    };
+    google.script.run.withSuccessHandler(function(res){
+      if(res.success){
+        bootstrap.Modal.getInstance(document.getElementById('contactModal')).hide();
+        load();
+      } else {
+        alert('Error: ' + (res.error || 'Unknown error'));
+      }
+    }).saveContactApi(obj);
+  });
+  load();
+})();
+</script> 

@@ -1,0 +1,85 @@
+<div>
+  <h2 class="text-2xl font-semibold mb-3">Dashboard</h2>
+  
+  <div class="row mb-4">
+    <div class="col-md-3 mb-3">
+      <div class="card border-primary">
+        <div class="card-body">
+          <h6 class="text-muted mb-2">Total Contacts</h6>
+          <h2 class="mb-0" id="statContacts">-</h2>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3 mb-3">
+      <div class="card border-success">
+        <div class="card-body">
+          <h6 class="text-muted mb-2">Companies</h6>
+          <h2 class="mb-0" id="statCompanies">-</h2>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3 mb-3">
+      <div class="card border-warning">
+        <div class="card-body">
+          <h6 class="text-muted mb-2">Open Deals</h6>
+          <h2 class="mb-0" id="statOpenDeals">-</h2>
+          <small class="text-muted" id="statDealValue">$0</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3 mb-3">
+      <div class="card border-danger">
+        <div class="card-body">
+          <h6 class="text-muted mb-2">Pending Tasks</h6>
+          <h2 class="mb-0" id="statPendingTasks">-</h2>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-6 mb-3">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">Recent Activity</h5>
+        </div>
+        <div class="card-body">
+          <div class="list-group list-group-flush" id="recentActivity">
+            <div class="text-muted">No recent activity</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6 mb-3">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">Quick Actions</h5>
+        </div>
+        <div class="card-body">
+          <div class="d-grid gap-2">
+            <button class="btn btn-outline-primary" data-page="contacts">Go to Contacts</button>
+            <button class="btn btn-outline-success" data-page="companies">Go to Companies</button>
+            <button class="btn btn-outline-warning" data-page="deals">Go to Deals</button>
+            <button class="btn btn-outline-danger" data-page="tasks">Go to Tasks</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  google.script.run.withSuccessHandler(function(stats){
+    if (stats.error) {
+      console.error('Stats error:', stats.error);
+      return;
+    }
+    document.getElementById('statContacts').textContent = stats.contacts || 0;
+    document.getElementById('statCompanies').textContent = stats.companies || 0;
+    document.getElementById('statOpenDeals').textContent = stats.openDeals || 0;
+    document.getElementById('statDealValue').textContent = '$' + (stats.totalDealValue || 0).toLocaleString();
+    document.getElementById('statPendingTasks').textContent = stats.pendingTasks || 0;
+  }).getStatsApi();
+})();
+</script> 

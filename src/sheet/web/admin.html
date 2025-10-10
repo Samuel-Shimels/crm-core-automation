@@ -1,0 +1,112 @@
+<div>
+  <h2 class="text-2xl font-semibold mb-3">Admin — Users</h2>
+  <div class="mb-2">
+    <button class="btn btn-outline-secondary" id="initBtn">Initialize Sheets</button>
+    <button class="btn btn-outline-success" id="initDemoBtn">Load Demo Data</button>
+    <button class="btn btn-primary" id="newUserBtn">New User</button>
+  </div>
+  <div class="card">
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-sm">
+          <thead>
+            <tr>
+              <th>Email</th>
+              <th>Name</th>
+              <th>Role</th>
+              <th>Active</th>
+            </tr>
+          </thead>
+          <tbody id="usersTbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="userModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">User</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-2"><input class="form-control" id="uEmail" placeholder="Email"></div>
+        <div class="mb-2"><input class="form-control" id="uName" placeholder="Display name"></div>
+        <div class="mb-2">
+          <select class="form-select" id="uRole">
+            <option>Admin</option>
+            <option selected>User</option>
+          </select>
+        </div>
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" id="uActive" checked>
+          <label class="form-check-label" for="uActive">Active</label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn btn-primary" id="saveUserBtn">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  function load(){
+    google.script.run.withSuccessHandler(function(resp){
+      var tb = document.getElementById('usersTbody'); tb.innerHTML = '';
+      (resp.rows || []).forEach(function(u){
+        var tr = document.createElement('tr');
+        tr.innerHTML = '<td>'+(u.email||'')+'</td><td>'+(u.display_name||'')+'</td><td>'+(u.role||'')+'</td><td>'+(u.active? 'Yes':'No')+'</td>';
+        tb.appendChild(tr);
+      });
+    }).listUsersApi({page:1,pageSize:100});
+  }
+  document.getElementById('initBtn').addEventListener('click', function(){
+    google.script.run.withSuccessHandler(function(){ alert('Initialized successfully!'); load(); }).initCrmSheetsApi();
+  });
+  document.getElementById('initDemoBtn').addEventListener('click', function(){
+    if(confirm('This will populate the CRM with sample data. Continue?')){
+      google.script.run.withSuccessHandler(function(res){
+        if(res.success){
+          alert('Demo data loaded! ' + res.message + '\n\nAdded:\n' + 
+            '- ' + res.counts.companies + ' companies\n' +
+            '- ' + res.counts.contacts + ' contacts\n' +
+            '- ' + res.counts.deals + ' deals\n' +
+            '- ' + res.counts.tasks + ' tasks');
+          load();
+        } else {
+          alert('Error: ' + (res.error || 'Unknown error'));
+        }
+      }).initDemoDataApi();
+    }
+  });
+  document.getElementById('newUserBtn').addEventListener('click', function(){
+    document.getElementById('uEmail').value='';
+    document.getElementById('uName').value='';
+    document.getElementById('uRole').value='User';
+    document.getElementById('uActive').checked=true;
+    new bootstrap.Modal(document.getElementById('userModal')).show();
+  });
+  document.getElementById('saveUserBtn').addEventListener('click', function(){
+    var obj = {
+      email: document.getElementById('uEmail').value,
+      display_name: document.getElementById('uName').value,
+      role: document.getElementById('uRole').value,
+      active: document.getElementById('uActive').checked
+    };
+    google.script.run.withSuccessHandler(function(res){
+      if (res.success) {
+        bootstrap.Modal.getInstance(document.getElementById('userModal')).hide();
+        load();
+      } else {
+        alert('Error: ' + (res.error || 'Unknown error'));
+      }
+    }).saveUserApi(obj);
+  });
+  load();
+})();
+</script> 
