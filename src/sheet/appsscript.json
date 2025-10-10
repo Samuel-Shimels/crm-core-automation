@@ -1,18 +1,21 @@
 {
   "timeZone": "Etc/UTC",
-   "dependencies": {
+  "exceptionLogging": "STACKDRIVER",
+  "runtimeVersion": "V8",
+  "dependencies": {
     "libraries": [
       {
         "userSymbol": "CrmLib",
-        "libraryId": "1yRpiUfhbXRwKkuA-aZIrXBM1iLGC4jeQ8MDH8yMNKOfRxQJqgaxBwaNc",
-        "version": "1",
+        "libraryId": "1TMa5N6F9EMHMU2oCYI3ZLL-GKDkflFtpK8XRxW8tikNNe6NAOBNcxDiY",
+        "version": "0",
         "developmentMode": true
       }
     ]
   },
-  "exceptionLogging": "STACKDRIVER",
-  "runtimeVersion": "V8",
-  "webapp": { "access": "DOMAIN", "executeAs": "USER_ACCESSING" },
+  "webapp": {
+    "executeAs": "USER_ACCESSING",
+    "access": "DOMAIN"
+  },
   "oauthScopes": [
     "https://www.googleapis.com/auth/spreadsheets",
     "https://www.googleapis.com/auth/drive",
