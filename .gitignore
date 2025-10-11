@@ -1,12 +1,25 @@
 # Clasp authentication files
 .clasprc.json
 
-# Clasp project files (contain script IDs)
-src/library/.clasp.json
-src/sheet/.clasp.json
+# Clasp project files (contain script IDs - should not be committed)
+.clasp.json
+**/.clasp.json
+*.clasp.json
+
+# Apps Script manifest files (contain project-specific settings)
+appsscript.json
+**/appsscript.json
+
+# Clasp deployment files
+.clasp.*.json
+
+# Note: Keep template files for reference
+!.clasp.template.json
+!appsscript.template.json
 
 # Node modules (if using any build tools)
 node_modules/
+package-lock.json
 
 # Environment files
 .env
