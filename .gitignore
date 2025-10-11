@@ -12,6 +12,7 @@ appsscript.json
 
 # Clasp deployment files
 .clasp*.json
+*.clasp*.json
 
 # Note: Keep template files for reference
 !.clasp.template.json
