@@ -1,0 +1,101 @@
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">
+          <i class="bi bi-rocket-takeoff"></i> CRM Core
+        </div>
+        <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
+          <i class="bi bi-moon-stars" id="themeIcon"></i>
+        </button>
+      </div>
+      
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <div class="nav-section-title">Main</div>
+          <a class="nav-item active" data-page="dashboard">
+            <i class="bi bi-graph-up"></i>
+            Dashboard
+          </a>
+        </div>
+        
+        <div class="nav-section">
+          <div class="nav-section-title">Sales</div>
+          <a class="nav-item" data-page="contacts">
+            <i class="bi bi-people"></i>
+            Contacts
+          </a>
+          <a class="nav-item" data-page="companies">
+            <i class="bi bi-building"></i>
+            Companies
+          </a>
+          <a class="nav-item" data-page="deals">
+            <i class="bi bi-briefcase"></i>
+            Deals
+          </a>
+        </div>
+        
+        <div class="nav-section">
+          <div class="nav-section-title">Activity</div>
+          <a class="nav-item" data-page="tasks">
+            <i class="bi bi-check-square"></i>
+            Tasks
+          </a>
+          <a class="nav-item" data-page="email">
+            <i class="bi bi-envelope"></i>
+            Email
+          </a>
+        </div>
+        
+        <div class="nav-section">
+          <div class="nav-section-title">Insights</div>
+          <a class="nav-item" data-page="reports">
+            <i class="bi bi-bar-chart"></i>
+            Reports
+          </a>
+        </div>
+        
+        <div class="nav-section">
+          <div class="nav-section-title">Settings</div>
+          <a class="nav-item" data-page="admin">
+            <i class="bi bi-gear"></i>
+            Admin
+          </a>
+        </div>
+      </nav>
+      
+      <div class="sidebar-footer">
+        <div class="user-profile" id="userProfile">
+          <div class="user-avatar" id="userAvatar">U</div>
+          <div class="user-info">
+            <div class="user-name" id="userName">User</div>
+            <div class="user-role" id="userRole">Member</div>
+          </div>
+          <button class="btn-icon" id="logoutBtn" title="Logout">
+            <i class="bi bi-box-arrow-right"></i>
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="main-content">
+      <header class="top-header">
+        <div class="header-left">
+          <div class="search-box">
+            <input type="text" placeholder="Search contacts, companies, deals..." id="globalSearch">
+            <i class="bi bi-search"></i>
+          </div>
+        </div>
+        
+        <div class="header-actions">
+          <button class="btn-header" id="notificationsBtn">
+            <i class="bi bi-bell"></i> Notifications
+          </button>
+          <button class="btn-header btn-primary-custom" id="quickAddHeaderBtn">
+            <i class="bi bi-plus-lg"></i> Quick Add
+          </button>
+        </div>
+      </header>
+
+      <div class="content-area">
+
