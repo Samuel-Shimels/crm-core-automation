@@ -72,6 +72,7 @@ var CrmLib = (function(ns) {
 
   /**
    * Save or update a company record.
+   * Invalidates company cache after modification.
    */
   self.saveCompany = function(spreadsheetId, companyObj) {
     const user = self.requireRole(spreadsheetId, ['Admin', 'User']);
@@ -118,11 +119,17 @@ var CrmLib = (function(ns) {
       });
     }
 
+    // Invalidate company-related caches
+    if (self.invalidateRelatedCaches) {
+      self.invalidateRelatedCaches('company');
+    }
+
     return { success: true, company_id: id };
   };
 
   /**
    * Delete a company record by ID.
+   * Invalidates company cache after deletion.
    */
   self.deleteCompany = function(spreadsheetId, company_id) {
     self.requireRole(spreadsheetId, ['Admin']);
@@ -137,6 +144,12 @@ var CrmLib = (function(ns) {
         const ss = SpreadsheetApp.openById(spreadsheetId);
         const sh = ss.getSheetByName('Companies');
         sh.deleteRow(i + 2); // adjust for header row
+        
+        // Invalidate company-related caches
+        if (self.invalidateRelatedCaches) {
+          self.invalidateRelatedCaches('company');
+        }
+        
         return { success: true };
       }
     }

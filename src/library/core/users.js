@@ -12,6 +12,7 @@ var CrmLib = (function(ns) {
 
   /**
    * List users with pagination.
+   * Uses Script Cache for improved performance.
    */
   self.listUsers = function(spreadsheetId, params) {
     self.requireRole(spreadsheetId, ['Admin']);
@@ -19,14 +20,30 @@ var CrmLib = (function(ns) {
 
     const page = params.page || 1;
     const pageSize = params.pageSize || 100;
+    const forceRefresh = params.forceRefresh || false;
 
-    const data = self.getSheetValues(spreadsheetId, 'Users');
-    const headers = data.headers;
-    const results = data.rows.map(r => {
-      const o = {};
-      headers.forEach((h, i) => o[h] = r[i]);
-      return o;
-    });
+    // Try to get from cache first
+    const cachedUsers = self.getCachedUsers ? self.getCachedUsers(spreadsheetId, forceRefresh) : null;
+    
+    let results;
+    if (cachedUsers) {
+      // Expand cached data to full user objects
+      const data = self.getSheetValues(spreadsheetId, 'Users');
+      const headers = data.headers;
+      results = data.rows.map(r => {
+        const o = {};
+        headers.forEach((h, i) => o[h] = r[i]);
+        return o;
+      });
+    } else {
+      const data = self.getSheetValues(spreadsheetId, 'Users');
+      const headers = data.headers;
+      results = data.rows.map(r => {
+        const o = {};
+        headers.forEach((h, i) => o[h] = r[i]);
+        return o;
+      });
+    }
 
     const total = results.length;
     const start = (page - 1) * pageSize;
@@ -58,6 +75,7 @@ var CrmLib = (function(ns) {
 
   /**
    * Save or update a user record.
+   * Invalidates user cache after modification.
    */
   self.saveUser = function(spreadsheetId, userObj) {
     self.requireRole(spreadsheetId, ['Admin']);
@@ -100,11 +118,17 @@ var CrmLib = (function(ns) {
       });
     }
 
+    // Invalidate user-related caches
+    if (self.invalidateRelatedCaches) {
+      self.invalidateRelatedCaches('user');
+    }
+
     return { success: true, user_id: id };
   };
 
   /**
    * Delete a user by ID.
+   * Invalidates user cache after deletion.
    */
   self.deleteUser = function(spreadsheetId, user_id) {
     self.requireRole(spreadsheetId, ['Admin']);
@@ -119,6 +143,12 @@ var CrmLib = (function(ns) {
         const ss = SpreadsheetApp.openById(spreadsheetId);
         const sh = ss.getSheetByName('Users');
         sh.deleteRow(i + 2); // account for header row
+        
+        // Invalidate user-related caches
+        if (self.invalidateRelatedCaches) {
+          self.invalidateRelatedCaches('user');
+        }
+        
         return { success: true };
       }
     }

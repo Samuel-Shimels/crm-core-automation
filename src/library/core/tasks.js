@@ -115,6 +115,11 @@ var CrmLib = (function(ns) {
       });
     }
 
+    // Invalidate task-related caches
+    if (self.invalidateRelatedCaches) {
+      self.invalidateRelatedCaches('task');
+    }
+
     return { success: true, task_id: id };
   };
 
@@ -134,6 +139,12 @@ var CrmLib = (function(ns) {
         const ss = SpreadsheetApp.openById(spreadsheetId);
         const sh = ss.getSheetByName('Tasks');
         sh.deleteRow(i + 2); // header row offset
+        
+        // Invalidate task-related caches
+        if (self.invalidateRelatedCaches) {
+          self.invalidateRelatedCaches('task');
+        }
+        
         return { success: true };
       }
     }
