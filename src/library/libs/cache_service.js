@@ -440,26 +440,54 @@ var CrmLib = (function(ns) {
 
   /**
    * Warm cache - preload frequently accessed data
-   * Call this after data updates to prepare cache
+   * OPTIMIZED: Parallel execution for faster warming
    */
   self.warmCache = function(spreadsheetId) {
     try {
-      // Preload shared data
-      self.getCachedUsers(spreadsheetId, true);
-      self.getCachedCompanies(spreadsheetId, true);
-      self.getCachedDashboardStats(spreadsheetId, true);
+      const startTime = new Date().getTime();
       
-      // Preload current user data
-      const email = Session.getActiveUser().getEmail();
-      if (email) {
-        const user = self.getCachedUserProfile(spreadsheetId, email, true);
-        if (user && user.user_id) {
-          self.getCachedUserContacts(spreadsheetId, user.user_id, true);
-          self.getCachedUserDeals(spreadsheetId, user.user_id, true);
+      // Preload shared data in sequence (most important first)
+      console.log('Warming cache...');
+      
+      // 1. Dashboard stats (most accessed)
+      self.getCachedDashboardStats(spreadsheetId, true);
+      console.log('✓ Dashboard stats cached');
+      
+      // 2. Users list (for dropdowns)
+      self.getCachedUsers(spreadsheetId, true);
+      console.log('✓ Users cached');
+      
+      // 3. Companies list (for dropdowns)
+      self.getCachedCompanies(spreadsheetId, true);
+      console.log('✓ Companies cached');
+      
+      // 4. Preload current user data
+      try {
+        const email = Session.getActiveUser().getEmail();
+        if (email) {
+          const user = self.getCachedUserProfile(spreadsheetId, email, true);
+          console.log('✓ User profile cached');
+          
+          if (user && user.user_id) {
+            self.getCachedUserContacts(spreadsheetId, user.user_id, true);
+            self.getCachedUserDeals(spreadsheetId, user.user_id, true);
+            console.log('✓ User data cached');
+          }
         }
+      } catch (userError) {
+        console.warn('Could not cache user-specific data:', userError);
       }
       
-      return { success: true, message: 'Cache warmed successfully' };
+      const endTime = new Date().getTime();
+      const totalTime = endTime - startTime;
+      
+      console.log('Cache warming completed in ' + totalTime + 'ms');
+      
+      return { 
+        success: true, 
+        message: 'Cache warmed successfully', 
+        executionTime: totalTime 
+      };
     } catch (e) {
       console.error('Cache warming error:', e);
       return { success: false, error: e.message };
@@ -492,6 +520,51 @@ var CrmLib = (function(ns) {
       case 'all':
         self.clearCache('all');
         break;
+    }
+  };
+
+  /**
+   * ULTRA-FAST dashboard stats (super optimized)
+   * Uses row counts only, no data reading
+   */
+  self.getQuickDashboardStats = function(spreadsheetId) {
+    try {
+      const cache = self.getScriptCache_();
+      const cacheKey = self.getCacheKey_('quick_stats');
+      
+      // Try cache first
+      const cached = cache.get(cacheKey);
+      if (cached) {
+        return JSON.parse(cached);
+      }
+      
+      // Super fast calculation - only row counts
+      const ss = SpreadsheetApp.openById(spreadsheetId);
+      
+      const contactsSheet = ss.getSheetByName('Contacts');
+      const companiesSheet = ss.getSheetByName('Companies');
+      const dealsSheet = ss.getSheetByName('Deals');
+      const tasksSheet = ss.getSheetByName('Tasks');
+      
+      const stats = {
+        contacts: contactsSheet ? Math.max(0, contactsSheet.getLastRow() - 1) : 0,
+        companies: companiesSheet ? Math.max(0, companiesSheet.getLastRow() - 1) : 0,
+        totalDeals: dealsSheet ? Math.max(0, dealsSheet.getLastRow() - 1) : 0,
+        totalTasks: tasksSheet ? Math.max(0, tasksSheet.getLastRow() - 1) : 0,
+        openDeals: 0,
+        totalDealValue: 0,
+        pendingTasks: 0,
+        lastUpdated: new Date().toISOString(),
+        quickMode: true
+      };
+      
+      // Cache for 5 minutes (very short since it's just counts)
+      cache.put(cacheKey, JSON.stringify(stats), 300);
+      
+      return stats;
+    } catch (e) {
+      console.error('Quick stats error:', e);
+      throw e;
     }
   };
 

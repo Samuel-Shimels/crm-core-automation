@@ -2056,12 +2056,17 @@ body {
               document.getElementById('userName').textContent = user.display_name || user.email;
               document.getElementById('userRole').textContent = user.role || 'User';
               
-              // Warm cache after login for instant performance
-              google.script.run
-                .withSuccessHandler(function() {
-                  console.log('✅ Cache preloaded for instant performance');
-                })
-                .warmCacheApi();
+              // Warm cache after login for instant performance (async - non-blocking)
+              setTimeout(function() {
+                google.script.run
+                  .withSuccessHandler(function(result) {
+                    console.log('✅ Cache preloaded in ' + (result.executionTime || 0) + 'ms');
+                  })
+                  .withFailureHandler(function(error) {
+                    console.warn('Cache warming failed:', error);
+                  })
+                  .warmCacheApi();
+              }, 100); // Delay to not block UI
               
               showApp();
               hideLoadingScreen();
@@ -2175,21 +2180,34 @@ body {
       
       // ===== DASHBOARD =====
       function initDashboard() {
-        // Use cached stats for 80-90% faster loading
+        const startTime = performance.now();
+        
+        // STAGE 1: Ultra-fast initial load (instant counts)
         google.script.run
           .withSuccessHandler(function(stats) {
+            // Display initial counts immediately
             document.getElementById('statContacts').textContent = stats.contacts || 0;
             document.getElementById('statCompanies').textContent = stats.companies || 0;
-            document.getElementById('statOpenDeals').textContent = stats.openDeals || 0;
+            document.getElementById('statOpenDeals').textContent = stats.openDeals || stats.totalDeals || 0;
             document.getElementById('statDealValue').textContent = '$' + (stats.totalDealValue || 0).toLocaleString() + ' total value';
-            document.getElementById('statPendingTasks').textContent = stats.pendingTasks || 0;
+            document.getElementById('statPendingTasks').textContent = stats.pendingTasks || stats.totalTasks || 0;
             
-            // Log cache usage for verification
-            if (stats.lastUpdated) {
-              console.log('Dashboard loaded from cache (updated: ' + new Date(stats.lastUpdated).toLocaleTimeString() + ')');
+            const loadTime = Math.round(performance.now() - startTime);
+            console.log('⚡ Dashboard loaded in ' + loadTime + 'ms (from cache)');
+            
+            // STAGE 2: Load full stats in background if needed
+            if (stats.quickMode) {
+              google.script.run
+                .withSuccessHandler(function(fullStats) {
+                  document.getElementById('statOpenDeals').textContent = fullStats.openDeals || 0;
+                  document.getElementById('statDealValue').textContent = '$' + (fullStats.totalDealValue || 0).toLocaleString() + ' total value';
+                  document.getElementById('statPendingTasks').textContent = fullStats.pendingTasks || 0;
+                  console.log('✓ Full stats loaded in background');
+                })
+                .getCachedStatsApi();
             }
           })
-          .getCachedStatsApi();  // CHANGED: Use cached version for performance
+          .getQuickStatsApi();  // ULTRA-FAST: Instant load with counts only
           
         initDashboardCharts();
       }
