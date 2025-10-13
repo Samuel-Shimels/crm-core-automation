@@ -258,27 +258,50 @@ function getStatsApi() {
 
 // ===== CONTACTS API =====
 
+/**
+ * List contacts with caching for better performance
+ */
 function listContactsApi(params) {
   try {
     const spreadsheetId = getCrmSheetId();
-    const ss = SpreadsheetApp.openById(spreadsheetId);
-    const sheet = ss.getSheetByName('Contacts');
     
-    if (!sheet || sheet.getLastRow() < 2) {
-      return { rows: [], total: 0 };
-    }
+    // Try to use cached full list first
+    const cacheKey = 'crm_contacts_full_list';
+    const cache = CacheService.getScriptCache();
+    let contacts;
     
-    const data = sheet.getDataRange().getValues();
-    const headers = data[0];
-    const rows = data.slice(1);
-    
-    const contacts = rows.map(function(row) {
-      const obj = {};
-      headers.forEach(function(header, idx) {
-        obj[header] = row[idx];
+    const cached = cache.get(cacheKey);
+    if (cached && !params.forceRefresh) {
+      contacts = JSON.parse(cached);
+      console.log('Contacts loaded from cache');
+    } else {
+      // Fetch from sheet
+      const ss = SpreadsheetApp.openById(spreadsheetId);
+      const sheet = ss.getSheetByName('Contacts');
+      
+      if (!sheet || sheet.getLastRow() < 2) {
+        return { rows: [], total: 0 };
+      }
+      
+      const data = sheet.getDataRange().getValues();
+      const headers = data[0];
+      const rows = data.slice(1);
+      
+      contacts = rows.map(function(row) {
+        const obj = {};
+        headers.forEach(function(header, idx) {
+          obj[header] = row[idx];
+        });
+        return obj;
       });
-      return obj;
-    });
+      
+      // Cache for 10 minutes
+      try {
+        cache.put(cacheKey, JSON.stringify(contacts), 600);
+      } catch (e) {
+        console.warn('Could not cache contacts:', e);
+      }
+    }
     
     const page = params.page || 1;
     const pageSize = params.pageSize || 10;
@@ -383,27 +406,50 @@ function saveContactApi(contact) {
 
 // ===== COMPANIES API =====
 
+/**
+ * List companies with caching for better performance
+ */
 function listCompaniesApi(params) {
   try {
     const spreadsheetId = getCrmSheetId();
-    const ss = SpreadsheetApp.openById(spreadsheetId);
-    const sheet = ss.getSheetByName('Companies');
     
-    if (!sheet || sheet.getLastRow() < 2) {
-      return { rows: [], total: 0 };
-    }
+    // Try to use cached full list first
+    const cacheKey = 'crm_companies_full_list';
+    const cache = CacheService.getScriptCache();
+    let companies;
     
-    const data = sheet.getDataRange().getValues();
-    const headers = data[0];
-    const rows = data.slice(1);
-    
-    const companies = rows.map(function(row) {
-      const obj = {};
-      headers.forEach(function(header, idx) {
-        obj[header] = row[idx];
+    const cached = cache.get(cacheKey);
+    if (cached && !params.forceRefresh) {
+      companies = JSON.parse(cached);
+      console.log('Companies loaded from cache');
+    } else {
+      // Fetch from sheet
+      const ss = SpreadsheetApp.openById(spreadsheetId);
+      const sheet = ss.getSheetByName('Companies');
+      
+      if (!sheet || sheet.getLastRow() < 2) {
+        return { rows: [], total: 0 };
+      }
+      
+      const data = sheet.getDataRange().getValues();
+      const headers = data[0];
+      const rows = data.slice(1);
+      
+      companies = rows.map(function(row) {
+        const obj = {};
+        headers.forEach(function(header, idx) {
+          obj[header] = row[idx];
+        });
+        return obj;
       });
-      return obj;
-    });
+      
+      // Cache for 10 minutes
+      try {
+        cache.put(cacheKey, JSON.stringify(companies), 600);
+      } catch (e) {
+        console.warn('Could not cache companies:', e);
+      }
+    }
     
     const page = params.page || 1;
     const pageSize = params.pageSize || 10;
@@ -505,27 +551,50 @@ function saveCompanyApi(company) {
 
 // ===== DEALS API =====
 
+/**
+ * List deals with caching for better performance
+ */
 function listDealsApi(params) {
   try {
     const spreadsheetId = getCrmSheetId();
-    const ss = SpreadsheetApp.openById(spreadsheetId);
-    const sheet = ss.getSheetByName('Deals');
     
-    if (!sheet || sheet.getLastRow() < 2) {
-      return { rows: [], total: 0 };
-    }
+    // Try to use cached full list first
+    const cacheKey = 'crm_deals_full_list';
+    const cache = CacheService.getScriptCache();
+    let deals;
     
-    const data = sheet.getDataRange().getValues();
-    const headers = data[0];
-    const rows = data.slice(1);
-    
-    const deals = rows.map(function(row) {
-      const obj = {};
-      headers.forEach(function(header, idx) {
-        obj[header] = row[idx];
+    const cached = cache.get(cacheKey);
+    if (cached && !params.forceRefresh) {
+      deals = JSON.parse(cached);
+      console.log('Deals loaded from cache');
+    } else {
+      // Fetch from sheet
+      const ss = SpreadsheetApp.openById(spreadsheetId);
+      const sheet = ss.getSheetByName('Deals');
+      
+      if (!sheet || sheet.getLastRow() < 2) {
+        return { rows: [], total: 0 };
+      }
+      
+      const data = sheet.getDataRange().getValues();
+      const headers = data[0];
+      const rows = data.slice(1);
+      
+      deals = rows.map(function(row) {
+        const obj = {};
+        headers.forEach(function(header, idx) {
+          obj[header] = row[idx];
+        });
+        return obj;
       });
-      return obj;
-    });
+      
+      // Cache for 10 minutes
+      try {
+        cache.put(cacheKey, JSON.stringify(deals), 600);
+      } catch (e) {
+        console.warn('Could not cache deals:', e);
+      }
+    }
     
     const page = params.page || 1;
     const pageSize = params.pageSize || 10;
@@ -632,27 +701,50 @@ function saveDealApi(deal) {
 
 // ===== TASKS API =====
 
+/**
+ * List tasks with caching for better performance
+ */
 function listTasksApi(params) {
   try {
     const spreadsheetId = getCrmSheetId();
-    const ss = SpreadsheetApp.openById(spreadsheetId);
-    const sheet = ss.getSheetByName('Tasks');
     
-    if (!sheet || sheet.getLastRow() < 2) {
-      return { rows: [], total: 0 };
-    }
+    // Try to use cached full list first
+    const cacheKey = 'crm_tasks_full_list';
+    const cache = CacheService.getScriptCache();
+    let tasks;
     
-    const data = sheet.getDataRange().getValues();
-    const headers = data[0];
-    const rows = data.slice(1);
-    
-    const tasks = rows.map(function(row) {
-      const obj = {};
-      headers.forEach(function(header, idx) {
-        obj[header] = row[idx];
+    const cached = cache.get(cacheKey);
+    if (cached && !params.forceRefresh) {
+      tasks = JSON.parse(cached);
+      console.log('Tasks loaded from cache');
+    } else {
+      // Fetch from sheet
+      const ss = SpreadsheetApp.openById(spreadsheetId);
+      const sheet = ss.getSheetByName('Tasks');
+      
+      if (!sheet || sheet.getLastRow() < 2) {
+        return { rows: [], total: 0 };
+      }
+      
+      const data = sheet.getDataRange().getValues();
+      const headers = data[0];
+      const rows = data.slice(1);
+      
+      tasks = rows.map(function(row) {
+        const obj = {};
+        headers.forEach(function(header, idx) {
+          obj[header] = row[idx];
+        });
+        return obj;
       });
-      return obj;
-    });
+      
+      // Cache for 10 minutes
+      try {
+        cache.put(cacheKey, JSON.stringify(tasks), 600);
+      } catch (e) {
+        console.warn('Could not cache tasks:', e);
+      }
+    }
     
     const page = params.page || 1;
     const pageSize = params.pageSize || 10;
@@ -998,6 +1090,216 @@ function saveCalendarEventApi(event) {
     return { success: true, event_id: newId, gcal_event_id: gcalEventId };
   } catch (error) {
     console.error('saveCalendarEventApi error:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+// ===== CACHE MANAGEMENT API =====
+
+/**
+ * Get cached users list for dropdowns (much faster than listUsersApi)
+ */
+function getCachedUsersApi() {
+  try {
+    const spreadsheetId = getCrmSheetId();
+    if (typeof CrmLib !== 'undefined' && CrmLib.getCachedUsers) {
+      const users = CrmLib.getCachedUsers(spreadsheetId, false);
+      return { success: true, users: users };
+    }
+    return listUsersApi({ pageSize: 100 });
+  } catch (error) {
+    console.error('getCachedUsersApi error:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Get cached companies list for dropdowns (much faster than listCompaniesApi)
+ */
+function getCachedCompaniesApi() {
+  try {
+    const spreadsheetId = getCrmSheetId();
+    if (typeof CrmLib !== 'undefined' && CrmLib.getCachedCompanies) {
+      const companies = CrmLib.getCachedCompanies(spreadsheetId, false);
+      return { success: true, companies: companies };
+    }
+    return listCompaniesApi({ pageSize: 100 });
+  } catch (error) {
+    console.error('getCachedCompaniesApi error:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Get cached dashboard stats (1-hour cache, much faster than getStatsApi)
+ */
+function getCachedStatsApi() {
+  try {
+    const spreadsheetId = getCrmSheetId();
+    if (typeof CrmLib !== 'undefined' && CrmLib.getCachedDashboardStats) {
+      const stats = CrmLib.getCachedDashboardStats(spreadsheetId, false);
+      console.log('Stats loaded (execution time: ' + (stats.executionTime || 0) + 'ms)');
+      return stats;
+    }
+    return getStatsApi();
+  } catch (error) {
+    console.error('getCachedStatsApi error:', error);
+    return getStatsApi();
+  }
+}
+
+/**
+ * ULTRA-FAST stats - only row counts (instant!)
+ * Use this for initial dashboard load, then load full stats in background
+ */
+function getQuickStatsApi() {
+  try {
+    const spreadsheetId = getCrmSheetId();
+    if (typeof CrmLib !== 'undefined' && CrmLib.getQuickDashboardStats) {
+      return CrmLib.getQuickDashboardStats(spreadsheetId);
+    }
+    return getCachedStatsApi();
+  } catch (error) {
+    console.error('getQuickStatsApi error:', error);
+    return getCachedStatsApi();
+  }
+}
+
+/**
+ * Warm cache - preload frequently accessed data for instant performance
+ * COMPREHENSIVE: Warms both library and list caches
+ */
+function warmCacheApi() {
+  try {
+    const startTime = new Date().getTime();
+    const spreadsheetId = getCrmSheetId();
+    
+    console.log('Warming all caches...');
+    
+    // Warm library caches (dashboard stats, users, companies)
+    if (typeof CrmLib !== 'undefined' && CrmLib.warmCache) {
+      CrmLib.warmCache(spreadsheetId);
+    }
+    
+    // Preload list caches by calling each list API once
+    listContactsApi({ page: 1, pageSize: 10 });
+    console.log('✓ Contacts list cached');
+    
+    listCompaniesApi({ page: 1, pageSize: 10 });
+    console.log('✓ Companies list cached');
+    
+    listDealsApi({ page: 1, pageSize: 10 });
+    console.log('✓ Deals list cached');
+    
+    listTasksApi({ page: 1, pageSize: 10 });
+    console.log('✓ Tasks list cached');
+    
+    const endTime = new Date().getTime();
+    const totalTime = endTime - startTime;
+    
+    console.log('All caches warmed in ' + totalTime + 'ms');
+    
+    return { 
+      success: true, 
+      message: 'All caches warmed successfully', 
+      executionTime: totalTime 
+    };
+  } catch (error) {
+    console.error('warmCacheApi error:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Clear cache by type
+ */
+function clearCacheApi(cacheType) {
+  try {
+    if (typeof CrmLib !== 'undefined' && CrmLib.clearCache) {
+      return CrmLib.clearCache(cacheType || 'all');
+    }
+    return { success: false, error: 'Cache service not available' };
+  } catch (error) {
+    console.error('clearCacheApi error:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Save user filters to cache
+ */
+function saveUserFiltersApi(filterType, filters) {
+  try {
+    if (typeof CrmLib !== 'undefined' && CrmLib.setUserFilters) {
+      CrmLib.setUserFilters(filterType, filters);
+      return { success: true };
+    }
+    return { success: false, error: 'Cache service not available' };
+  } catch (error) {
+    console.error('saveUserFiltersApi error:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Get saved user filters from cache
+ */
+function getUserFiltersApi(filterType) {
+  try {
+    if (typeof CrmLib !== 'undefined' && CrmLib.getUserFilters) {
+      const filters = CrmLib.getUserFilters(filterType);
+      return { success: true, filters: filters };
+    }
+    return { success: false, filters: {} };
+  } catch (error) {
+    console.error('getUserFiltersApi error:', error);
+    return { success: false, filters: {} };
+  }
+}
+
+/**
+ * Invalidate cache after data changes
+ * Also clears list caches for immediate freshness
+ */
+function invalidateCacheApi(entityType) {
+  try {
+    // Clear related list caches
+    const cache = CacheService.getScriptCache();
+    
+    switch(entityType) {
+      case 'contact':
+        cache.remove('crm_contacts_full_list');
+        break;
+      case 'company':
+        cache.remove('crm_companies_full_list');
+        break;
+      case 'deal':
+        cache.remove('crm_deals_full_list');
+        break;
+      case 'task':
+        cache.remove('crm_tasks_full_list');
+        break;
+      case 'user':
+        cache.remove('crm_users_full_list');
+        break;
+      case 'all':
+        cache.remove('crm_contacts_full_list');
+        cache.remove('crm_companies_full_list');
+        cache.remove('crm_deals_full_list');
+        cache.remove('crm_tasks_full_list');
+        cache.remove('crm_users_full_list');
+        break;
+    }
+    
+    // Also invalidate CrmLib caches
+    if (typeof CrmLib !== 'undefined' && CrmLib.invalidateRelatedCaches) {
+      CrmLib.invalidateRelatedCaches(entityType);
+    }
+    
+    console.log('✓ Cache invalidated for: ' + entityType);
+    return { success: true };
+  } catch (error) {
+    console.error('invalidateCacheApi error:', error);
     return { success: false, error: error.message };
   }
 }
