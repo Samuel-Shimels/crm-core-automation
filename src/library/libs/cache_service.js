@@ -257,7 +257,7 @@ var CrmLib = (function(ns) {
 
   /**
    * Get cached dashboard stats (Script Cache - shared)
-   * Reduces repeated aggregation queries
+   * OPTIMIZED: Uses efficient counting and batch operations
    */
   self.getCachedDashboardStats = function(spreadsheetId, forceRefresh) {
     if (forceRefresh) {
@@ -265,8 +265,10 @@ var CrmLib = (function(ns) {
     }
     
     return self.getCached('script', 'dashboard_stats', function() {
+      const startTime = new Date().getTime();
       const ss = SpreadsheetApp.openById(spreadsheetId);
       
+      // Quick row counts (very fast)
       const contactsSheet = ss.getSheetByName('Contacts');
       const companiesSheet = ss.getSheetByName('Companies');
       const dealsSheet = ss.getSheetByName('Deals');
@@ -277,32 +279,52 @@ var CrmLib = (function(ns) {
       
       let totalDealValue = 0;
       let openDeals = 0;
+      
+      // OPTIMIZED: Only read necessary columns for deals
       if (dealsSheet && dealsSheet.getLastRow() > 1) {
-        const dealsData = dealsSheet.getDataRange().getValues();
-        const headers = dealsData[0];
+        const headers = dealsSheet.getRange(1, 1, 1, dealsSheet.getLastColumn()).getValues()[0];
         const statusIdx = headers.indexOf('status');
         const amountIdx = headers.indexOf('amount');
         
-        for (let i = 1; i < dealsData.length; i++) {
-          if (dealsData[i][statusIdx] === 'Open') {
-            openDeals++;
-            totalDealValue += Number(dealsData[i][amountIdx]) || 0;
+        if (statusIdx >= 0 && amountIdx >= 0) {
+          // Only read status and amount columns (much faster than full range)
+          const lastRow = dealsSheet.getLastRow();
+          const statusValues = dealsSheet.getRange(2, statusIdx + 1, lastRow - 1, 1).getValues();
+          const amountValues = dealsSheet.getRange(2, amountIdx + 1, lastRow - 1, 1).getValues();
+          
+          for (let i = 0; i < statusValues.length; i++) {
+            if (statusValues[i][0] === 'Open') {
+              openDeals++;
+              totalDealValue += Number(amountValues[i][0]) || 0;
+            }
           }
         }
       }
       
       let pendingTasks = 0;
+      
+      // OPTIMIZED: Only read status column for tasks
       if (tasksSheet && tasksSheet.getLastRow() > 1) {
-        const tasksData = tasksSheet.getDataRange().getValues();
-        const headers = tasksData[0];
+        const headers = tasksSheet.getRange(1, 1, 1, tasksSheet.getLastColumn()).getValues()[0];
         const statusIdx = headers.indexOf('status');
         
-        for (let i = 1; i < tasksData.length; i++) {
-          if (tasksData[i][statusIdx] === 'Pending' || tasksData[i][statusIdx] === 'In Progress') {
-            pendingTasks++;
+        if (statusIdx >= 0) {
+          const lastRow = tasksSheet.getLastRow();
+          const statusValues = tasksSheet.getRange(2, statusIdx + 1, lastRow - 1, 1).getValues();
+          
+          for (let i = 0; i < statusValues.length; i++) {
+            const status = statusValues[i][0];
+            if (status === 'Pending' || status === 'In Progress') {
+              pendingTasks++;
+            }
           }
         }
       }
+      
+      const endTime = new Date().getTime();
+      const executionTime = endTime - startTime;
+      
+      console.log('Dashboard stats calculated in ' + executionTime + 'ms');
       
       return {
         contacts: contactsCount,
@@ -310,9 +332,10 @@ var CrmLib = (function(ns) {
         openDeals: openDeals,
         totalDealValue: totalDealValue,
         pendingTasks: pendingTasks,
-        lastUpdated: new Date().toISOString()
+        lastUpdated: new Date().toISOString(),
+        executionTime: executionTime
       };
-    }, 1800); // 30 minutes TTL for stats
+    }, 3600); // 1 hour TTL for stats (increased from 30 min)
   };
 
   /**
