@@ -199,19 +199,9 @@ function initDemoDataApi() {
 
 // ===== DASHBOARD API =====
 
-/**
- * Get dashboard statistics (with caching for better performance)
- */
 function getStatsApi() {
   try {
     const spreadsheetId = getCrmSheetId();
-    
-    // Use cached stats if available (30-minute TTL)
-    if (typeof CrmLib !== 'undefined' && CrmLib.getCachedDashboardStats) {
-      return CrmLib.getCachedDashboardStats(spreadsheetId, false);
-    }
-    
-    // Fallback to direct calculation if cache not available
     const ss = SpreadsheetApp.openById(spreadsheetId);
     
     const contactsSheet = ss.getSheetByName('Contacts');
@@ -221,6 +211,8 @@ function getStatsApi() {
     
     const contactsCount = contactsSheet ? Math.max(0, contactsSheet.getLastRow() - 1) : 0;
     const companiesCount = companiesSheet ? Math.max(0, companiesSheet.getLastRow() - 1) : 0;
+    const dealsCount = dealsSheet ? Math.max(0, dealsSheet.getLastRow() - 1) : 0;
+    const tasksCount = tasksSheet ? Math.max(0, tasksSheet.getLastRow() - 1) : 0;
     
     let totalDealValue = 0;
     let openDeals = 0;
@@ -1006,105 +998,6 @@ function saveCalendarEventApi(event) {
     return { success: true, event_id: newId, gcal_event_id: gcalEventId };
   } catch (error) {
     console.error('saveCalendarEventApi error:', error);
-    return { success: false, error: error.message };
-  }
-}
-
-// ===== CACHE MANAGEMENT API =====
-
-/**
- * Get cached users list for dropdowns
- */
-function getCachedUsersListApi() {
-  try {
-    const spreadsheetId = getCrmSheetId();
-    if (typeof CrmLib !== 'undefined' && CrmLib.getCachedUsers) {
-      const users = CrmLib.getCachedUsers(spreadsheetId, false);
-      return { success: true, users: users };
-    }
-    return { success: false, error: 'Cache service not available' };
-  } catch (error) {
-    console.error('getCachedUsersListApi error:', error);
-    return { success: false, error: error.message };
-  }
-}
-
-/**
- * Get cached companies list for dropdowns
- */
-function getCachedCompaniesListApi() {
-  try {
-    const spreadsheetId = getCrmSheetId();
-    if (typeof CrmLib !== 'undefined' && CrmLib.getCachedCompanies) {
-      const companies = CrmLib.getCachedCompanies(spreadsheetId, false);
-      return { success: true, companies: companies };
-    }
-    return { success: false, error: 'Cache service not available' };
-  } catch (error) {
-    console.error('getCachedCompaniesListApi error:', error);
-    return { success: false, error: error.message };
-  }
-}
-
-/**
- * Warm cache - preload frequently accessed data
- */
-function warmCacheApi() {
-  try {
-    const spreadsheetId = getCrmSheetId();
-    if (typeof CrmLib !== 'undefined' && CrmLib.warmCache) {
-      return CrmLib.warmCache(spreadsheetId);
-    }
-    return { success: false, error: 'Cache service not available' };
-  } catch (error) {
-    console.error('warmCacheApi error:', error);
-    return { success: false, error: error.message };
-  }
-}
-
-/**
- * Clear cache by type
- */
-function clearCacheApi(cacheType) {
-  try {
-    if (typeof CrmLib !== 'undefined' && CrmLib.clearCache) {
-      return CrmLib.clearCache(cacheType || 'all');
-    }
-    return { success: false, error: 'Cache service not available' };
-  } catch (error) {
-    console.error('clearCacheApi error:', error);
-    return { success: false, error: error.message };
-  }
-}
-
-/**
- * Save user filters to cache
- */
-function saveUserFiltersApi(filterType, filters) {
-  try {
-    if (typeof CrmLib !== 'undefined' && CrmLib.setUserFilters) {
-      const success = CrmLib.setUserFilters(filterType, filters);
-      return { success: success };
-    }
-    return { success: false, error: 'Cache service not available' };
-  } catch (error) {
-    console.error('saveUserFiltersApi error:', error);
-    return { success: false, error: error.message };
-  }
-}
-
-/**
- * Get user filters from cache
- */
-function getUserFiltersApi(filterType) {
-  try {
-    if (typeof CrmLib !== 'undefined' && CrmLib.getUserFilters) {
-      const filters = CrmLib.getUserFilters(filterType);
-      return { success: true, filters: filters };
-    }
-    return { success: false, error: 'Cache service not available' };
-  } catch (error) {
-    console.error('getUserFiltersApi error:', error);
     return { success: false, error: error.message };
   }
 }
