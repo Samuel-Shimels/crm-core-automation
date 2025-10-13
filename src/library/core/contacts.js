@@ -123,11 +123,6 @@ var CrmLib = (function(ns) {
       });
     }
 
-    // Invalidate contact-related caches
-    if (self.invalidateRelatedCaches) {
-      self.invalidateRelatedCaches('contact');
-    }
-
     return { success: true, contact_id: id };
   };
 
@@ -147,12 +142,6 @@ var CrmLib = (function(ns) {
         const ss = SpreadsheetApp.openById(spreadsheetId);
         const sh = ss.getSheetByName('Contacts');
         sh.deleteRow(i + 2); // adjust for header row
-        
-        // Invalidate contact-related caches
-        if (self.invalidateRelatedCaches) {
-          self.invalidateRelatedCaches('contact');
-        }
-        
         return { success: true };
       }
     }
