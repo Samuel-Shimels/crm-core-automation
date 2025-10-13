@@ -29,63 +29,113 @@ The CRM now uses Google Apps Script's `CacheService` to dramatically improve per
 
 ### 1. Fast Dropdowns
 
-```javascript
-// Get users for dropdown (cached for 6 hours)
-google.script.run
-  .withSuccessHandler(function(resp) {
-    populateDropdown(resp.users);
-  })
-  .getCachedUsersListApi();
+**First, create a cached API in Code.js:**
 
-// Get companies for dropdown (cached for 6 hours)
+```javascript
+// Code.js
+function getCachedUsersApi() {
+  const spreadsheetId = getCrmSheetId();
+  const users = CrmLib.getCachedUsers(spreadsheetId, false);
+  return { success: true, users: users };
+}
+```
+
+**Then use it in frontend:**
+
+```javascript
+// index.html
 google.script.run
   .withSuccessHandler(function(resp) {
-    populateDropdown(resp.companies);
+    if (resp.success) {
+      populateDropdown(resp.users);
+    }
   })
-  .getCachedCompaniesListApi();
+  .getCachedUsersApi();
 ```
 
 ### 2. Save User Filters
 
+**Create filter APIs in Code.js:**
+
 ```javascript
-// Save filters when user applies them
-function saveCurrentFilters() {
-  const filters = {
-    status: $('#statusFilter').val(),
-    owner: $('#ownerFilter').val()
-  };
-  
-  google.script.run.saveUserFiltersApi('contacts', filters);
+// Code.js
+function saveFiltersApi(filterType, filters) {
+  CrmLib.setUserFilters(filterType, filters);
+  return { success: true };
 }
 
-// Load saved filters on page load
-function loadSavedFilters() {
+function getFiltersApi(filterType) {
+  const filters = CrmLib.getUserFilters(filterType);
+  return { success: true, filters: filters };
+}
+```
+
+**Use in frontend:**
+
+```javascript
+// index.html
+// Save filters
+function saveFilters() {
+  const filters = { status: 'Active', owner: 'user_123' };
+  google.script.run.saveFiltersApi('contacts', filters);
+}
+
+// Load filters
+function loadFilters() {
   google.script.run
     .withSuccessHandler(function(resp) {
-      if (resp.success && resp.filters) {
-        $('#statusFilter').val(resp.filters.status);
-        $('#ownerFilter').val(resp.filters.owner);
+      if (resp.success) {
+        applyFilters(resp.filters);
       }
     })
-    .getUserFiltersApi('contacts');
+    .getFiltersApi('contacts');
 }
 ```
 
 ### 3. Fast Dashboard
 
+**Create cached stats API in Code.js:**
+
 ```javascript
-// Dashboard stats are automatically cached for 30 minutes
+// Code.js
+function getCachedStatsApi() {
+  try {
+    const spreadsheetId = getCrmSheetId();
+    return CrmLib.getCachedDashboardStats(spreadsheetId, false);
+  } catch (error) {
+    // Fallback to regular stats
+    return getStatsApi();
+  }
+}
+```
+
+**Use in frontend:**
+
+```javascript
+// index.html
 google.script.run
   .withSuccessHandler(function(stats) {
     updateDashboard(stats);
   })
-  .getStatsApi();
+  .getCachedStatsApi();
 ```
 
 ### 4. Preload Data
 
+**Create warm cache API in Code.js:**
+
 ```javascript
-// Warm cache after login for instant performance
+// Code.js
+function warmCacheApi() {
+  const spreadsheetId = getCrmSheetId();
+  return CrmLib.warmCache(spreadsheetId);
+}
+```
+
+**Use in frontend:**
+
+```javascript
+// index.html
 function onLogin() {
   google.script.run
     .withSuccessHandler(function() {
@@ -101,13 +151,22 @@ function onLogin() {
 
 ### Clear Cache (if needed)
 
-```javascript
-// Clear all caches
-google.script.run.clearCacheApi('all');
+**Create clear cache API in Code.js:**
 
-// Clear specific cache
-google.script.run.clearCacheApi('script');  // Shared data
-google.script.run.clearCacheApi('user');    // User-specific data
+```javascript
+// Code.js
+function clearCacheApi(cacheType) {
+  return CrmLib.clearCache(cacheType || 'all');
+}
+```
+
+**Use in frontend:**
+
+```javascript
+// index.html
+google.script.run.clearCacheApi('all');      // Clear all
+google.script.run.clearCacheApi('script');   // Shared only
+google.script.run.clearCacheApi('user');     // User only
 ```
 
 ### Force Refresh

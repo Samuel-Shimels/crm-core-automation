@@ -51,26 +51,24 @@ After Cache:   Dashboard loads in 0.5-1 second ⚡
 
 ### Basic Usage
 
+**The cache service is a utility library.** Create your own cached APIs as needed:
+
 ```javascript
-// Get users for dropdown (cached)
-google.script.run
-  .withSuccessHandler(function(resp) {
-    populateDropdown(resp.users);
-  })
-  .getCachedUsersListApi();
+// 1. Create API in Code.js
+function getCachedUsersApi() {
+  const spreadsheetId = getCrmSheetId();
+  return CrmLib.getCachedUsers(spreadsheetId, false);
+}
 
-// Save user filters (persistent)
-google.script.run.saveUserFiltersApi('contacts', {
-  status: 'Active'
-});
-
-// Load saved filters
+// 2. Use in frontend
 google.script.run
-  .withSuccessHandler(function(resp) {
-    applyFilters(resp.filters);
+  .withSuccessHandler(function(users) {
+    populateDropdown(users);
   })
-  .getUserFiltersApi('contacts');
+  .getCachedUsersApi();
 ```
+
+See **[CACHE-USAGE-GUIDE.md](CACHE-USAGE-GUIDE.md)** for complete patterns and examples.
 
 ---
 
@@ -121,36 +119,51 @@ google.script.run
 
 ### Use Cached Data
 ```javascript
-// Already implemented! Just use the APIs
-google.script.run.getCachedUsersListApi();
-google.script.run.getCachedCompaniesListApi();
+// In Code.js - Create your APIs
+function getCachedUsersApi() {
+  return CrmLib.getCachedUsers(getCrmSheetId(), false);
+}
+
+// In frontend - Use your APIs
+google.script.run.getCachedUsersApi();
 ```
 
 ### Save User Preferences
 ```javascript
-google.script.run.saveUserFiltersApi('contacts', filters);
+// In Code.js
+function saveFiltersApi(type, filters) {
+  CrmLib.setUserFilters(type, filters);
+  return { success: true };
+}
+
+// In frontend
+google.script.run.saveFiltersApi('contacts', filters);
 ```
 
 ### Preload Cache
 ```javascript
-google.script.run.warmCacheApi();
+// Direct library call or create wrapper API
+CrmLib.warmCache(spreadsheetId);
 ```
 
-### Clear Cache (if needed)
+### Clear Cache
 ```javascript
-google.script.run.clearCacheApi('all');
+// Direct library call or create wrapper API
+CrmLib.clearCache('all');
 ```
+
+**See [CACHE-USAGE-GUIDE.md](CACHE-USAGE-GUIDE.md) for detailed patterns.**
 
 ---
 
-## ✅ It Just Works!
+## ✅ Developer-Controlled Caching
 
-**The cache is already active!** You don't need to configure anything.
+**The cache service is available as a utility!** Use it when and where you need it.
 
-- ✅ Auto-updates when you save data
-- ✅ Expires old data automatically
-- ✅ Falls back if cache fails
-- ✅ Optimizes everything automatically
+- ✅ Opt-in by design - use only where beneficial
+- ✅ Full developer control - you decide when to cache
+- ✅ Clean codebase - no forced dependencies
+- ✅ Easy integration - simple function calls
 
 ---
 

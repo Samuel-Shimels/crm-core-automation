@@ -24,34 +24,29 @@ The CRM Core Automation now has a **comprehensive, production-ready caching syst
 
 **Lines of Code:** 600+
 
-### 2. Updated Core Modules ✅
+### 2. Core Modules (Unchanged) ✅
 
-**Files Modified:**
-- `src/library/core/users.js` ✅
-- `src/library/core/companies.js` ✅
-- `src/library/core/contacts.js` ✅
-- `src/library/core/deals.js` ✅
-- `src/library/core/tasks.js` ✅
+**Files:**
+- `src/library/core/users.js`
+- `src/library/core/companies.js`
+- `src/library/core/contacts.js`
+- `src/library/core/deals.js`
+- `src/library/core/tasks.js`
 
-**Changes:**
-- ✅ Cache invalidation on save operations
-- ✅ Cache invalidation on delete operations
-- ✅ Smart invalidation by entity type
+**Approach:**
+- ✅ Core modules remain clean and focused
+- ✅ Cache integration is opt-in by developers
+- ✅ Cache service available as utility when needed
 
-### 3. API Endpoints ✅
+### 3. API Layer (Unchanged) ✅
 
 **File:** `src/sheet/Code.js`
 
-**New Endpoints:**
-- ✅ `getCachedUsersListApi()` - Get cached users for dropdowns
-- ✅ `getCachedCompaniesListApi()` - Get cached companies for dropdowns
-- ✅ `warmCacheApi()` - Preload frequently accessed data
-- ✅ `clearCacheApi(cacheType)` - Clear cache by type
-- ✅ `saveUserFiltersApi(type, filters)` - Save user filter preferences
-- ✅ `getUserFiltersApi(type)` - Get saved filter preferences
-
-**Updated Endpoints:**
-- ✅ `getStatsApi()` - Now uses cached dashboard stats
+**Approach:**
+- ✅ Existing APIs remain unchanged
+- ✅ Developers can add cache calls as needed
+- ✅ `getStatsApi()` and other APIs work without cache dependency
+- ✅ Cache service can be called directly from custom APIs when desired
 
 ### 4. Documentation ✅
 
@@ -133,89 +128,95 @@ The CRM Core Automation now has a **comprehensive, production-ready caching syst
 
 ---
 
-## 🔄 Auto-Invalidation System
+## 🔄 Cache Management Approach
 
-### Smart Cache Invalidation
+### Manual Cache Control
 
+The cache service is available as a **utility library** that developers can use when and where needed:
+
+```javascript
+// When you want to cache data
+const cachedUsers = CrmLib.getCachedUsers(spreadsheetId);
+
+// When you need to invalidate cache after updates
+CrmLib.invalidateRelatedCaches('user');
+
+// When you want to warm the cache
+CrmLib.warmCache(spreadsheetId);
 ```
-User saves a contact
-    ↓
-CrmLib.saveContact()
-    ↓
-invalidateRelatedCaches('contact')
-    ↓
-Clears: dashboard_stats
-    ↓
-Next request fetches fresh data
-```
 
-### Invalidation Map
+### Developer Choice
 
-| Action | Invalidates |
-|--------|-------------|
-| Save/Delete User | `users_list`, `user_profile` |
-| Save/Delete Company | `companies_list`, `dashboard_stats` |
-| Save/Delete Contact | `dashboard_stats` |
-| Save/Delete Deal | `dashboard_stats` |
-| Save/Delete Task | `dashboard_stats` |
+| Approach | When to Use |
+|----------|-------------|
+| **With Cache** | High-traffic pages, dropdowns, dashboards |
+| **Without Cache** | Real-time data, recent updates, admin operations |
+| **Hybrid** | Use cache for reads, invalidate on writes |
 
-**No manual cache management needed!** ✅
+**Developers have full control!** ✅
 
 ---
 
 ## 💡 Usage Examples
 
-### Frontend Usage
+### Backend Usage (Code.js)
 
-#### Fast Dropdowns
+#### Create Your Own Cached APIs
+
 ```javascript
-// Load users dropdown (< 0.3 seconds)
+// Create a cached users API endpoint
+function getCachedUsersApi() {
+  try {
+    const spreadsheetId = getCrmSheetId();
+    const users = CrmLib.getCachedUsers(spreadsheetId, false);
+    return { success: true, users: users };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+}
+
+// Create a cached dashboard stats API
+function getCachedStatsApi() {
+  try {
+    const spreadsheetId = getCrmSheetId();
+    const stats = CrmLib.getCachedDashboardStats(spreadsheetId, false);
+    return stats;
+  } catch (error) {
+    console.error('Error:', error);
+    // Fallback to regular getStatsApi
+    return getStatsApi();
+  }
+}
+
+// Invalidate cache after updates
+function saveContactWithCache(contact) {
+  try {
+    const spreadsheetId = getCrmSheetId();
+    const result = saveContactApi(contact);
+    
+    if (result.success) {
+      // Invalidate affected caches
+      CrmLib.invalidateRelatedCaches('contact');
+    }
+    
+    return result;
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+}
+```
+
+#### Frontend Usage
+
+```javascript
+// Call your custom cached API
 google.script.run
   .withSuccessHandler(function(resp) {
-    resp.users.forEach(user => {
-      $('#userSelect').append(
-        `<option value="${user.user_id}">${user.display_name}</option>`
-      );
-    });
+    if (resp.success) {
+      populateUserDropdown(resp.users);
+    }
   })
-  .getCachedUsersListApi();
-```
-
-#### Persistent Filters
-```javascript
-// Save filters when user changes them
-function saveFilters() {
-  const filters = {
-    status: $('#status').val(),
-    owner: $('#owner').val()
-  };
-  google.script.run.saveUserFiltersApi('contacts', filters);
-}
-
-// Load saved filters on page load
-function loadFilters() {
-  google.script.run
-    .withSuccessHandler(function(resp) {
-      if (resp.success && resp.filters) {
-        $('#status').val(resp.filters.status);
-        $('#owner').val(resp.filters.owner);
-      }
-    })
-    .getUserFiltersApi('contacts');
-}
-```
-
-#### Preload Cache
-```javascript
-// After successful login
-function onLoginSuccess() {
-  google.script.run
-    .withSuccessHandler(function() {
-      console.log('Cache warmed - ready to go!');
-      loadDashboard();
-    })
-    .warmCacheApi();
-}
+  .getCachedUsersApi();
 ```
 
 ### Backend Usage
@@ -237,8 +238,13 @@ CrmLib.warmCache(spreadsheetId);
 
 #### In Code.js
 ```javascript
-// Stats API uses cache automatically
+// Create cached version alongside regular API
 function getStatsApi() {
+  const spreadsheetId = getCrmSheetId();
+  // ... regular implementation
+}
+
+function getCachedStatsApi() {
   const spreadsheetId = getCrmSheetId();
   return CrmLib.getCachedDashboardStats(spreadsheetId, false);
 }

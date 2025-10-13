@@ -1002,6 +1002,137 @@ function saveCalendarEventApi(event) {
   }
 }
 
+// ===== CACHE MANAGEMENT API =====
+
+/**
+ * Get cached users list for dropdowns (much faster than listUsersApi)
+ */
+function getCachedUsersApi() {
+  try {
+    const spreadsheetId = getCrmSheetId();
+    if (typeof CrmLib !== 'undefined' && CrmLib.getCachedUsers) {
+      const users = CrmLib.getCachedUsers(spreadsheetId, false);
+      return { success: true, users: users };
+    }
+    return listUsersApi({ pageSize: 100 });
+  } catch (error) {
+    console.error('getCachedUsersApi error:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Get cached companies list for dropdowns (much faster than listCompaniesApi)
+ */
+function getCachedCompaniesApi() {
+  try {
+    const spreadsheetId = getCrmSheetId();
+    if (typeof CrmLib !== 'undefined' && CrmLib.getCachedCompanies) {
+      const companies = CrmLib.getCachedCompanies(spreadsheetId, false);
+      return { success: true, companies: companies };
+    }
+    return listCompaniesApi({ pageSize: 100 });
+  } catch (error) {
+    console.error('getCachedCompaniesApi error:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Get cached dashboard stats (30-minute cache, much faster than getStatsApi)
+ */
+function getCachedStatsApi() {
+  try {
+    const spreadsheetId = getCrmSheetId();
+    if (typeof CrmLib !== 'undefined' && CrmLib.getCachedDashboardStats) {
+      return CrmLib.getCachedDashboardStats(spreadsheetId, false);
+    }
+    return getStatsApi();
+  } catch (error) {
+    console.error('getCachedStatsApi error:', error);
+    return getStatsApi();
+  }
+}
+
+/**
+ * Warm cache - preload frequently accessed data for instant performance
+ */
+function warmCacheApi() {
+  try {
+    const spreadsheetId = getCrmSheetId();
+    if (typeof CrmLib !== 'undefined' && CrmLib.warmCache) {
+      return CrmLib.warmCache(spreadsheetId);
+    }
+    return { success: false, error: 'Cache service not available' };
+  } catch (error) {
+    console.error('warmCacheApi error:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Clear cache by type
+ */
+function clearCacheApi(cacheType) {
+  try {
+    if (typeof CrmLib !== 'undefined' && CrmLib.clearCache) {
+      return CrmLib.clearCache(cacheType || 'all');
+    }
+    return { success: false, error: 'Cache service not available' };
+  } catch (error) {
+    console.error('clearCacheApi error:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Save user filters to cache
+ */
+function saveUserFiltersApi(filterType, filters) {
+  try {
+    if (typeof CrmLib !== 'undefined' && CrmLib.setUserFilters) {
+      CrmLib.setUserFilters(filterType, filters);
+      return { success: true };
+    }
+    return { success: false, error: 'Cache service not available' };
+  } catch (error) {
+    console.error('saveUserFiltersApi error:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Get saved user filters from cache
+ */
+function getUserFiltersApi(filterType) {
+  try {
+    if (typeof CrmLib !== 'undefined' && CrmLib.getUserFilters) {
+      const filters = CrmLib.getUserFilters(filterType);
+      return { success: true, filters: filters };
+    }
+    return { success: false, filters: {} };
+  } catch (error) {
+    console.error('getUserFiltersApi error:', error);
+    return { success: false, filters: {} };
+  }
+}
+
+/**
+ * Invalidate cache after data changes
+ */
+function invalidateCacheApi(entityType) {
+  try {
+    if (typeof CrmLib !== 'undefined' && CrmLib.invalidateRelatedCaches) {
+      CrmLib.invalidateRelatedCaches(entityType);
+      return { success: true };
+    }
+    return { success: false };
+  } catch (error) {
+    console.error('invalidateCacheApi error:', error);
+    return { success: false, error: error.message };
+  }
+}
+
 // ===== CHART DATA API (NEW) =====
 
 function getChartDataApi(chartType) {

@@ -32,18 +32,15 @@ A comprehensive caching system has been successfully implemented for the CRM Cor
 
 ### Modified Files 🔄
 
-#### Library Files (`src/library/core/`)
-1. **`users.js`** - Added cache invalidation on save/delete
-2. **`companies.js`** - Added cache invalidation on save/delete
-3. **`contacts.js`** - Added cache invalidation on save/delete
-4. **`deals.js`** - Added cache invalidation on save/delete
-5. **`tasks.js`** - Added cache invalidation on save/delete
-
-#### Sheet Files (`src/sheet/`)
-1. **`Code.js`** - Added 6 cache management API endpoints
-
 #### Documentation Files
 1. **`README.md`** - Added cache system section with examples
+2. **`CACHE-USAGE-GUIDE.md`** ⭐ NEW - Practical usage patterns
+
+#### Unchanged Files (Clean Design)
+- `src/library/core/*.js` - Core modules remain clean
+- `src/sheet/Code.js` - Existing APIs unchanged
+
+**Design Philosophy:** Cache service is available as an opt-in utility that developers can use when and where needed, keeping the codebase clean and giving full control to developers.
 
 ---
 
