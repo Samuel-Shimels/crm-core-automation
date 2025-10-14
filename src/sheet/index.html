@@ -1968,6 +1968,227 @@ body {
     (function() {
       'use strict';
       
+      // ===== OPTIMIZED API CLIENT =====
+      // Provides XMLHttpRequest support for async, non-blocking server calls
+      // Can fall back to google.script.run when XMLHttpRequest is not available
+      
+      const API_CONFIG = {
+        useXHR: false, // Set to true to enable XMLHttpRequest (requires deployed web app URL)
+        deploymentUrl: '', // Set this to your deployed web app URL when useXHR is true
+        defaultTimeout: 30000 // 30 seconds timeout
+      };
+      
+      /**
+       * OPTIMIZED: Unified API Client
+       * Automatically uses XMLHttpRequest or google.script.run based on configuration
+       */
+      const ApiClient = {
+        /**
+         * Call a server-side function
+         * @param {string} action - The action/function to call
+         * @param {object} params - Parameters to pass
+         * @param {function} onSuccess - Success callback
+         * @param {function} onError - Error callback
+         */
+        call: function(action, params, onSuccess, onError) {
+          if (API_CONFIG.useXHR && API_CONFIG.deploymentUrl) {
+            // Use XMLHttpRequest for async, non-blocking calls
+            this._callViaXHR(action, params, onSuccess, onError);
+          } else {
+            // Fall back to google.script.run
+            this._callViaGoogleScript(action, params, onSuccess, onError);
+          }
+        },
+        
+        /**
+         * XMLHttpRequest implementation (async, non-blocking)
+         */
+        _callViaXHR: function(action, params, onSuccess, onError) {
+          const startTime = performance.now();
+          const xhr = new XMLHttpRequest();
+          
+          xhr.open('POST', API_CONFIG.deploymentUrl, true);
+          xhr.setRequestHeader('Content-Type', 'application/json');
+          xhr.timeout = API_CONFIG.defaultTimeout;
+          
+          xhr.onload = function() {
+            const elapsed = Math.round(performance.now() - startTime);
+            
+            if (xhr.status === 200) {
+              try {
+                const response = JSON.parse(xhr.responseText);
+                console.log(`✅ XHR ${action} completed in ${elapsed}ms`);
+                
+                if (onSuccess) {
+                  onSuccess(response);
+                }
+              } catch (e) {
+                console.error('XHR parse error:', e);
+                if (onError) {
+                  onError({ message: 'Failed to parse server response' });
+                }
+              }
+            } else {
+              console.error(`XHR ${action} failed with status ${xhr.status}`);
+              if (onError) {
+                onError({ message: `Server error: ${xhr.status}` });
+              }
+            }
+          };
+          
+          xhr.onerror = function() {
+            console.error(`XHR ${action} network error`);
+            if (onError) {
+              onError({ message: 'Network error' });
+            }
+          };
+          
+          xhr.ontimeout = function() {
+            console.error(`XHR ${action} timeout`);
+            if (onError) {
+              onError({ message: 'Request timeout' });
+            }
+          };
+          
+          const payload = JSON.stringify({
+            action: action,
+            params: params || {}
+          });
+          
+          xhr.send(payload);
+        },
+        
+        /**
+         * google.script.run implementation (traditional)
+         */
+        _callViaGoogleScript: function(action, params, onSuccess, onError) {
+          const startTime = performance.now();
+          
+          // Map action to corresponding server function
+          const functionMap = {
+            // Dashboard & Stats
+            'getStats': 'getCachedStatsApi',
+            'getQuickStats': 'getQuickStatsApi',
+            'getChartData': 'getChartDataApi',
+            
+            // Contacts
+            'listContacts': 'listContactsApi',
+            'getContact': 'getContactApi',
+            'saveContact': 'saveContactApi',
+            
+            // Companies
+            'listCompanies': 'listCompaniesApi',
+            'getCompany': 'getCompanyApi',
+            'saveCompany': 'saveCompanyApi',
+            
+            // Deals
+            'listDeals': 'listDealsApi',
+            'getDeal': 'getDealApi',
+            'saveDeal': 'saveDealApi',
+            
+            // Tasks
+            'listTasks': 'listTasksApi',
+            'getTask': 'getTaskApi',
+            'saveTask': 'saveTaskApi',
+            
+            // Users
+            'listUsers': 'listUsersApi',
+            'saveUser': 'saveUserApi',
+            
+            // Email
+            'sendEmail': 'sendEmailApi',
+            'listEmailLog': 'listEmailLogApi',
+            'listEmailTemplates': 'listEmailTemplatesApi',
+            'getEmailTemplate': 'getEmailTemplateApi',
+            'saveEmailTemplate': 'saveEmailTemplateApi',
+            
+            // Calendar
+            'listCalendarEvents': 'listCalendarEventsApi',
+            'saveCalendarEvent': 'saveCalendarEventApi',
+            
+            // Cache
+            'warmCache': 'warmCacheApi',
+            'clearCache': 'clearCacheApi',
+            'invalidateCache': 'invalidateCacheApi',
+            
+            // Admin
+            'initSheets': 'initCrmSheetsApi',
+            'initDemoData': 'initDemoDataApi'
+          };
+          
+          const functionName = functionMap[action];
+          
+          if (!functionName) {
+            console.error('Unknown action:', action);
+            if (onError) {
+              onError({ message: 'Unknown action: ' + action });
+            }
+            return;
+          }
+          
+          const runner = google.script.run;
+          
+          if (onSuccess) {
+            runner.withSuccessHandler(function(response) {
+              const elapsed = Math.round(performance.now() - startTime);
+              console.log(`✅ ${action} completed in ${elapsed}ms`);
+              onSuccess(response);
+            });
+          }
+          
+          if (onError) {
+            runner.withFailureHandler(onError);
+          }
+          
+          // Call the function with params
+          if (params && typeof params === 'object' && !Array.isArray(params)) {
+            // If params is an object, pass it as argument
+            runner[functionName](params);
+          } else {
+            // Otherwise call without params
+            runner[functionName]();
+          }
+        },
+        
+        /**
+         * Batch API calls (execute multiple calls in parallel)
+         * Only supported with google.script.run (not XHR)
+         */
+        batchCall: function(calls, onComplete) {
+          let completed = 0;
+          const results = {};
+          const errors = {};
+          
+          calls.forEach(function(callConfig) {
+            const callId = callConfig.id || callConfig.action;
+            
+            ApiClient.call(
+              callConfig.action,
+              callConfig.params,
+              function(response) {
+                results[callId] = response;
+                completed++;
+                
+                if (completed === calls.length) {
+                  onComplete(results, errors);
+                }
+              },
+              function(error) {
+                errors[callId] = error;
+                completed++;
+                
+                if (completed === calls.length) {
+                  onComplete(results, errors);
+                }
+              }
+            );
+          });
+        }
+      };
+      
+      // Make ApiClient available globally
+      window.ApiClient = ApiClient;
+      
       let currentUser = null;
       let currentView = 'dashboard';
       let revenueChart, dealDistChart, pipelineChart, taskChart;

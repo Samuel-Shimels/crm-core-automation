@@ -98,6 +98,130 @@ var CrmLib = (function(ns) {
   };
 
   /**
+   * OPTIMIZED: Design Document Pattern - withCache wrapper
+   * Simplified cache-or-fetch pattern (defaults to Script Cache)
+   * @param {string} cacheKey - Cache key
+   * @param {function} fetcher - Function to call if cache miss
+   * @param {number} seconds - Time to live in seconds (default: 300)
+   */
+  self.withCache = function(cacheKey, fetcher, seconds) {
+    const cache = self.getScriptCache_();
+    const fullKey = self.getCacheKey_(cacheKey);
+    seconds = seconds || 300;
+    
+    try {
+      const cached = cache.get(fullKey);
+      if (cached) {
+        return JSON.parse(cached);
+      }
+    } catch (e) {
+      console.warn('Cache read error for key ' + fullKey + ':', e);
+    }
+    
+    // Cache miss - fetch and store
+    const value = fetcher();
+    
+    try {
+      cache.put(fullKey, JSON.stringify(value), seconds);
+    } catch (e) {
+      console.warn('Cache write error for key ' + fullKey + ':', e);
+    }
+    
+    return value;
+  };
+
+  /**
+   * OPTIMIZED: Batch cache operations
+   * Put multiple values at once (more efficient than individual puts)
+   * @param {string} cacheType - 'script', 'user', or 'document'
+   * @param {object} keyValueMap - Object with key-value pairs to cache
+   * @param {number} ttl - Time to live in seconds
+   */
+  self.putBatch = function(cacheType, keyValueMap, ttl) {
+    ttl = ttl || CACHE_EXPIRY;
+    
+    let cache;
+    switch(cacheType) {
+      case 'script':
+        cache = self.getScriptCache_();
+        break;
+      case 'user':
+        cache = self.getUserCache_();
+        break;
+      case 'document':
+        cache = self.getDocumentCache_();
+        break;
+      default:
+        throw new Error('Invalid cache type: ' + cacheType);
+    }
+    
+    const batchData = {};
+    Object.keys(keyValueMap).forEach(function(key) {
+      const fullKey = self.getCacheKey_(key);
+      batchData[fullKey] = JSON.stringify(keyValueMap[key]);
+    });
+    
+    try {
+      cache.putAll(batchData, ttl);
+      return { success: true, count: Object.keys(batchData).length };
+    } catch (e) {
+      console.error('Batch cache write error:', e);
+      return { success: false, error: e.message };
+    }
+  };
+
+  /**
+   * OPTIMIZED: Batch cache get
+   * Retrieve multiple values at once
+   * @param {string} cacheType - 'script', 'user', or 'document'
+   * @param {array} keys - Array of cache keys to retrieve
+   */
+  self.getBatch = function(cacheType, keys) {
+    let cache;
+    switch(cacheType) {
+      case 'script':
+        cache = self.getScriptCache_();
+        break;
+      case 'user':
+        cache = self.getUserCache_();
+        break;
+      case 'document':
+        cache = self.getDocumentCache_();
+        break;
+      default:
+        throw new Error('Invalid cache type: ' + cacheType);
+    }
+    
+    const fullKeys = keys.map(function(k) {
+      return self.getCacheKey_(k);
+    });
+    
+    try {
+      const cached = cache.getAll(fullKeys);
+      const result = {};
+      
+      keys.forEach(function(key, idx) {
+        const fullKey = fullKeys[idx];
+        if (cached[fullKey]) {
+          try {
+            result[key] = JSON.parse(cached[fullKey]);
+          } catch (e) {
+            console.warn('Error parsing cached value for key ' + key + ':', e);
+            result[key] = null;
+          }
+        } else {
+          result[key] = null;
+        }
+      });
+      
+      return result;
+    } catch (e) {
+      console.error('Batch cache read error:', e);
+      return {};
+    }
+  };
+
+  /**
    * Put data directly into cache
    */
   self.putCache = function(cacheType, key, data, ttl) {

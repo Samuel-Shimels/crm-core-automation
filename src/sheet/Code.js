@@ -24,6 +24,167 @@ function doGet(e) {
   }
 }
 
+/**
+ * OPTIMIZED: XMLHttpRequest API Handler
+ * Provides async, non-blocking API for client-side XMLHttpRequest calls
+ * Usage from client:
+ *   xhr.open('POST', scriptUrl);
+ *   xhr.send(JSON.stringify({action: 'listContacts', params: {page: 1}}));
+ */
+function doPost(e) {
+  try {
+    let requestData;
+    
+    // Parse incoming JSON request
+    if (e.postData && e.postData.contents) {
+      try {
+        requestData = JSON.parse(e.postData.contents);
+      } catch (parseError) {
+        return ContentService.createTextOutput(JSON.stringify({
+          success: false,
+          error: 'Invalid JSON in request body'
+        })).setMimeType(ContentService.MimeType.JSON);
+      }
+    } else {
+      return ContentService.createTextOutput(JSON.stringify({
+        success: false,
+        error: 'No request data provided'
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+    
+    const action = requestData.action;
+    const params = requestData.params || {};
+    
+    // Route to appropriate handler
+    let result;
+    switch(action) {
+      // Dashboard & Stats
+      case 'getStats':
+        result = getCachedStatsApi();
+        break;
+      case 'getQuickStats':
+        result = getQuickStatsApi();
+        break;
+      case 'getChartData':
+        result = getChartDataApi(params.chartType);
+        break;
+        
+      // Contacts
+      case 'listContacts':
+        result = listContactsApi(params);
+        break;
+      case 'getContact':
+        result = getContactApi(params.contactId);
+        break;
+      case 'saveContact':
+        result = saveContactApi(params.contact);
+        break;
+        
+      // Companies
+      case 'listCompanies':
+        result = listCompaniesApi(params);
+        break;
+      case 'getCompany':
+        result = getCompanyApi(params.companyId);
+        break;
+      case 'saveCompany':
+        result = saveCompanyApi(params.company);
+        break;
+        
+      // Deals
+      case 'listDeals':
+        result = listDealsApi(params);
+        break;
+      case 'getDeal':
+        result = getDealApi(params.dealId);
+        break;
+      case 'saveDeal':
+        result = saveDealApi(params.deal);
+        break;
+        
+      // Tasks
+      case 'listTasks':
+        result = listTasksApi(params);
+        break;
+      case 'getTask':
+        result = getTaskApi(params.taskId);
+        break;
+      case 'saveTask':
+        result = saveTaskApi(params.task);
+        break;
+        
+      // Users
+      case 'listUsers':
+        result = listUsersApi(params);
+        break;
+      case 'saveUser':
+        result = saveUserApi(params.user);
+        break;
+        
+      // Email
+      case 'sendEmail':
+        result = sendEmailApi(params.emailData);
+        break;
+      case 'listEmailLog':
+        result = listEmailLogApi(params);
+        break;
+      case 'listEmailTemplates':
+        result = listEmailTemplatesApi();
+        break;
+      case 'getEmailTemplate':
+        result = getEmailTemplateApi(params.templateId);
+        break;
+      case 'saveEmailTemplate':
+        result = saveEmailTemplateApi(params.template);
+        break;
+        
+      // Calendar
+      case 'listCalendarEvents':
+        result = listCalendarEventsApi(params);
+        break;
+      case 'saveCalendarEvent':
+        result = saveCalendarEventApi(params.event);
+        break;
+        
+      // Cache Management
+      case 'warmCache':
+        result = warmCacheApi();
+        break;
+      case 'clearCache':
+        result = clearCacheApi(params.cacheType);
+        break;
+      case 'invalidateCache':
+        result = invalidateCacheApi(params.entityType);
+        break;
+        
+      // Admin
+      case 'initSheets':
+        result = initCrmSheetsApi();
+        break;
+      case 'initDemoData':
+        result = initDemoDataApi();
+        break;
+        
+      default:
+        result = {
+          success: false,
+          error: 'Unknown action: ' + action
+        };
+    }
+    
+    // Return JSON response
+    return ContentService.createTextOutput(JSON.stringify(result))
+      .setMimeType(ContentService.MimeType.JSON);
+      
+  } catch (error) {
+    console.error('doPost error:', error);
+    return ContentService.createTextOutput(JSON.stringify({
+      success: false,
+      error: error.message || 'Server error'
+    })).setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
 // ===== AUTHENTICATION =====
 
 function loginUser(email, password) {
@@ -1003,6 +1164,151 @@ function listEmailLogApi(params) {
   } catch (error) {
     console.error('listEmailLogApi error:', error);
     return { rows: [], total: 0, error: error.message };
+  }
+}
+
+/**
+ * OPTIMIZED: Email Templates API
+ * Store and manage email templates in Email_Templates sheet
+ */
+function listEmailTemplatesApi() {
+  try {
+    const spreadsheetId = getCrmSheetId();
+    
+    return CrmLib.withCache('email_templates_list', function() {
+      const ss = SpreadsheetApp.openById(spreadsheetId);
+      let sheet = ss.getSheetByName('Email_Templates');
+      
+      // Create sheet if it doesn't exist
+      if (!sheet) {
+        sheet = ss.insertSheet('Email_Templates');
+        sheet.appendRow(['template_id', 'name', 'subject', 'body_html', 'category', 'created_at', 'updated_at']);
+        
+        // Add default templates
+        const now = new Date().toISOString();
+        const defaultTemplates = [
+          ['tpl_welcome', 'Welcome Email', 'Welcome to {{company}}!', 
+           '<p>Hi {{first_name}},</p><p>Welcome to {{company}}! We\'re excited to have you on board.</p><p>Best regards,<br>The {{company}} Team</p>',
+           'Onboarding', now, now],
+          ['tpl_followup', 'Follow-up', 'Following up on our conversation',
+           '<p>Hi {{first_name}},</p><p>I wanted to follow up on our recent conversation.</p><p>Do you have time this week to discuss further?</p><p>Best regards,<br>{{sender_name}}</p>',
+           'Sales', now, now],
+          ['tpl_proposal', 'Proposal', 'Proposal for {{company}}',
+           '<p>Hi {{first_name}},</p><p>Thank you for your interest. Please find our proposal attached.</p><p>We look forward to working with you!</p><p>Best regards,<br>{{sender_name}}</p>',
+           'Sales', now, now],
+          ['tpl_thankyou', 'Thank You', 'Thank you!',
+           '<p>Hi {{first_name}},</p><p>Thank you for choosing {{company}}. We appreciate your business!</p><p>Best regards,<br>The {{company}} Team</p>',
+           'General', now, now]
+        ];
+        
+        defaultTemplates.forEach(function(tpl) {
+          sheet.appendRow(tpl);
+        });
+      }
+      
+      const data = sheet.getDataRange().getValues();
+      const headers = data[0];
+      const rows = data.slice(1);
+      
+      return rows.map(function(row) {
+        const obj = {};
+        headers.forEach(function(header, idx) {
+          obj[header] = row[idx];
+        });
+        return obj;
+      });
+    }, 3600); // Cache for 1 hour
+  } catch (error) {
+    console.error('listEmailTemplatesApi error:', error);
+    return [];
+  }
+}
+
+function getEmailTemplateApi(templateId) {
+  try {
+    const spreadsheetId = getCrmSheetId();
+    const ss = SpreadsheetApp.openById(spreadsheetId);
+    const sheet = ss.getSheetByName('Email_Templates');
+    
+    if (!sheet || sheet.getLastRow() < 2) {
+      return null;
+    }
+    
+    const data = sheet.getDataRange().getValues();
+    const headers = data[0];
+    const templateIdIdx = headers.indexOf('template_id');
+    
+    for (let i = 1; i < data.length; i++) {
+      if (data[i][templateIdIdx] === templateId) {
+        const obj = {};
+        headers.forEach(function(header, idx) {
+          obj[header] = data[i][idx];
+        });
+        return obj;
+      }
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('getEmailTemplateApi error:', error);
+    return null;
+  }
+}
+
+function saveEmailTemplateApi(template) {
+  try {
+    const spreadsheetId = getCrmSheetId();
+    const ss = SpreadsheetApp.openById(spreadsheetId);
+    let sheet = ss.getSheetByName('Email_Templates');
+    
+    if (!sheet) {
+      // Initialize sheet if it doesn't exist
+      listEmailTemplatesApi();
+      sheet = ss.getSheetByName('Email_Templates');
+    }
+    
+    const data = sheet.getDataRange().getValues();
+    const headers = data[0];
+    
+    const templateId = template.template_id || 'tpl_' + Utilities.getUuid();
+    const now = new Date().toISOString();
+    
+    // Check if template exists
+    const templateIdIdx = headers.indexOf('template_id');
+    for (let i = 1; i < data.length; i++) {
+      if (data[i][templateIdIdx] === templateId) {
+        // Update existing template
+        sheet.getRange(i + 1, headers.indexOf('name') + 1).setValue(template.name || '');
+        sheet.getRange(i + 1, headers.indexOf('subject') + 1).setValue(template.subject || '');
+        sheet.getRange(i + 1, headers.indexOf('body_html') + 1).setValue(template.body_html || '');
+        sheet.getRange(i + 1, headers.indexOf('category') + 1).setValue(template.category || 'General');
+        sheet.getRange(i + 1, headers.indexOf('updated_at') + 1).setValue(now);
+        
+        // Invalidate cache
+        CrmLib.invalidateCache('script', 'email_templates_list');
+        
+        return { success: true, template_id: templateId };
+      }
+    }
+    
+    // New template
+    sheet.appendRow([
+      templateId,
+      template.name || '',
+      template.subject || '',
+      template.body_html || '',
+      template.category || 'General',
+      now,
+      now
+    ]);
+    
+    // Invalidate cache
+    CrmLib.invalidateCache('script', 'email_templates_list');
+    
+    return { success: true, template_id: templateId };
+  } catch (error) {
+    console.error('saveEmailTemplateApi error:', error);
+    return { success: false, error: error.message };
   }
 }
 
