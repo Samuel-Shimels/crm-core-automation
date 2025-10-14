@@ -1,1101 +1,1261 @@
 <!DOCTYPE html>
 <html>
+
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>CRM Core - Modern Business Management</title>
-  
+
   <!-- External Libraries -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-  
+
   <style>
-/* ===== CSS VARIABLES & THEME SYSTEM ===== */
-:root {
-  --brand: #6366f1;
-  --brand-dark: #4f46e5;
-  --brand-light: #818cf8;
-  --brand-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  --success: #10b981;
-  --warning: #f59e0b;
-  --danger: #ef4444;
-  --info: #3b82f6;
-  
-  /* Light Theme (Default) */
-  --bg-primary: #ffffff;
-  --bg-secondary: #f8fafc;
-  --bg-tertiary: #f1f5f9;
-  --text-primary: #1e293b;
-  --text-secondary: #64748b;
-  --text-muted: #94a3b8;
-  --border-color: #e2e8f0;
-  --sidebar-bg: #ffffff;
-  --card-bg: #ffffff;
-  --shadow: rgba(0, 0, 0, 0.1);
-  --sidebar-width: 280px;
-}
-
-[data-theme="dark"] {
-  --bg-primary: #0f172a;
-  --bg-secondary: #1e293b;
-  --bg-tertiary: #334155;
-  --text-primary: #f1f5f9;
-  --text-secondary: #cbd5e1;
-  --text-muted: #94a3b8;
-  --border-color: #334155;
-  --sidebar-bg: #1e293b;
-  --card-bg: #1e293b;
-  --shadow: rgba(0, 0, 0, 0.4);
-}
-
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
-}
-
-body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background: var(--bg-secondary);
-  color: var(--text-primary);
-  overflow-x: hidden;
-}
-
-/* ===== LOADING SCREEN ===== */
-.loading-screen {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: var(--brand-gradient);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  z-index: 9999;
-  transition: opacity 0.5s ease;
-}
-
-.loading-screen.hidden {
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-}
-
-.loading-logo {
-  font-size: 2.5rem;
-  font-weight: 700;
-  color: white;
-  margin-bottom: 2rem;
-  animation: pulse 2s ease-in-out infinite;
-}
-
-.loading-spinner {
-  width: 60px;
-  height: 60px;
-  border: 4px solid rgba(255, 255, 255, 0.2);
-  border-top-color: white;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-@keyframes pulse {
-  0%, 100% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.05); opacity: 0.9; }
-}
-
-/* ===== LOGIN PAGE ===== */
-.login-container {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--brand-gradient);
-  padding: 2rem;
-}
-
-.login-card {
-  background: var(--card-bg);
-  border-radius: 1.5rem;
-  box-shadow: 0 20px 60px var(--shadow);
-  width: 100%;
-  max-width: 450px;
-  padding: 3rem;
-  animation: slideUp 0.5s ease;
-}
-
-@keyframes slideUp {
-  from { opacity: 0; transform: translateY(30px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.login-logo {
-  text-align: center;
-  margin-bottom: 2rem;
-}
-
-.login-logo i {
-  font-size: 3rem;
-  background: var(--brand-gradient);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.login-logo h1 {
-  font-size: 2rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin: 1rem 0 0.5rem;
-}
-
-.login-logo p {
-  color: var(--text-secondary);
-  font-size: 0.95rem;
-}
-
-.btn-login {
-  width: 100%;
-  padding: 0.85rem;
-  background: var(--brand-gradient);
-  border: none;
-  color: white;
-  font-weight: 600;
-  border-radius: 0.75rem;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-login:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4);
-}
-
-.btn-login:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  transform: none;
-}
-
-/* ===== APP LAYOUT ===== */
-.app-wrapper {
-  display: none;
-  min-height: 100vh;
-}
-
-.app-wrapper.active {
-  display: flex;
-}
-
-/* ===== SIDEBAR ===== */
-.sidebar {
-  width: var(--sidebar-width);
-  background: var(--sidebar-bg);
-  border-right: 1px solid var(--border-color);
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  position: fixed;
-  top: 0;
-  left: 0;
-  z-index: 1000;
-  box-shadow: 2px 0 10px var(--shadow);
-}
-
-.sidebar-header {
-  padding: 1.5rem;
-  border-bottom: 1px solid var(--border-color);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.sidebar-logo {
-  font-size: 1.5rem;
-  font-weight: 700;
-  background: var(--brand-gradient);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.theme-toggle {
-  background: var(--bg-tertiary);
-  border: 1px solid var(--border-color);
-  border-radius: 0.5rem;
-  padding: 0.5rem 0.75rem;
-  cursor: pointer;
-  color: var(--text-primary);
-  transition: all 0.3s;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 1.1rem;
-}
-
-.theme-toggle:hover {
-  background: var(--brand);
-  color: white;
-  border-color: var(--brand);
-}
-
-.sidebar-nav {
-  flex: 1;
-  padding: 1rem 0;
-  overflow-y: auto;
-}
-
-.nav-section {
-  margin-bottom: 1.5rem;
-}
-
-.nav-section-title {
-  padding: 0 1.5rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  letter-spacing: 0.05em;
-  margin-bottom: 0.5rem;
-}
-
-.nav-item {
-  display: flex;
-  align-items: center;
-  padding: 0.75rem 1.5rem;
-  color: var(--text-secondary);
-  text-decoration: none;
-  cursor: pointer;
-  border-left: 3px solid transparent;
-  transition: all 0.2s;
-}
-
-.nav-item:hover {
-  background: var(--bg-tertiary);
-  color: var(--brand);
-}
-
-.nav-item.active {
-  background: rgba(99, 102, 241, 0.1);
-  color: var(--brand);
-  border-left-color: var(--brand);
-  font-weight: 600;
-}
-
-.nav-item i {
-  width: 24px;
-  font-size: 1.2rem;
-  margin-right: 0.75rem;
-}
-
-.sidebar-footer {
-  padding: 1rem 1.5rem;
-  border-top: 1px solid var(--border-color);
-}
-
-.user-profile {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem;
-  border-radius: 0.75rem;
-  background: var(--bg-tertiary);
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.user-profile:hover {
-  background: var(--bg-secondary);
-}
-
-.user-avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: var(--brand-gradient);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-weight: 600;
-  font-size: 1rem;
-  flex-shrink: 0;
-}
-
-.user-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.user-name {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.user-role {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-}
-
-/* ===== MAIN CONTENT ===== */
-.main-content {
-  margin-left: var(--sidebar-width);
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  width: calc(100% - var(--sidebar-width));
-}
-
-.top-header {
-  background: var(--bg-primary);
-  border-bottom: 1px solid var(--border-color);
-  padding: 1rem 2rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  box-shadow: 0 2px 10px var(--shadow);
-}
-
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  flex: 1;
-}
-
-.search-box {
-  position: relative;
-  max-width: 500px;
-  width: 100%;
-}
-
-.search-box input {
-  width: 100%;
-  padding: 0.75rem 3rem 0.75rem 1rem;
-  border: 1px solid var(--border-color);
-  border-radius: 0.75rem;
-  background: var(--bg-secondary);
-  color: var(--text-primary);
-  font-size: 0.9rem;
-  transition: all 0.2s;
-}
-
-.search-box input:focus {
-  outline: none;
-  border-color: var(--brand);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-}
-
-.search-box i {
-  position: absolute;
-  right: 1rem;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--text-muted);
-}
-
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.btn-header {
-  padding: 0.75rem 1.25rem;
-  border: 1px solid var(--border-color);
-  background: var(--bg-primary);
-  color: var(--text-primary);
-  border-radius: 0.75rem;
-  font-size: 0.9rem;
-  font-weight: 500;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  transition: all 0.2s;
-}
-
-.btn-header:hover {
-  border-color: var(--brand);
-  color: var(--brand);
-  transform: translateY(-1px);
-}
-
-.btn-primary-custom {
-  background: var(--brand-gradient);
-  color: white;
-  border: none;
-}
-
-.btn-primary-custom:hover {
-  color: white;
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
-}
-
-.content-area {
-  flex: 1;
-  padding: 2rem;
-  overflow-y: auto;
-}
-
-/* ===== VIEW SECTIONS ===== */
-.view-section {
-  display: none;
-  animation: fadeIn 0.3s ease;
-}
-
-.view-section.active {
-  display: block;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.page-header {
-  margin-bottom: 2rem;
-}
-
-.page-title {
-  font-size: 2rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: 0.5rem;
-}
-
-.page-subtitle {
-  color: var(--text-secondary);
-  font-size: 1rem;
-}
-
-/* ===== STAT CARDS ===== */
-.stat-card {
-  background: var(--card-bg);
-  border-radius: 1rem;
-  padding: 1.5rem;
-  border: 1px solid var(--border-color);
-  position: relative;
-  overflow: hidden;
-  transition: all 0.3s;
-  box-shadow: 0 2px 8px var(--shadow);
-}
-
-.stat-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 20px var(--shadow);
-}
-
-.stat-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 4px;
-  height: 100%;
-  background: var(--brand);
-}
-
-.stat-card.success::before { background: var(--success); }
-.stat-card.warning::before { background: var(--warning); }
-.stat-card.danger::before { background: var(--danger); }
-.stat-card.info::before { background: var(--info); }
-
-.stat-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 1rem;
-}
-
-.stat-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 0.75rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.5rem;
-  color: white;
-  flex-shrink: 0;
-}
-
-.stat-icon.primary { background: var(--brand); }
-.stat-icon.success { background: var(--success); }
-.stat-icon.warning { background: var(--warning); }
-.stat-icon.danger { background: var(--danger); }
-.stat-icon.info { background: var(--info); }
-
-.stat-label {
-  font-size: 0.9rem;
-  color: var(--text-secondary);
-  font-weight: 500;
-  margin-bottom: 0.5rem;
-}
-
-.stat-value {
-  font-size: 2.25rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  line-height: 1;
-  margin-bottom: 0.75rem;
-}
-
-.stat-change {
-  font-size: 0.85rem;
-  padding: 0.25rem 0.75rem;
-  border-radius: 0.5rem;
-  font-weight: 600;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-}
-
-.stat-change.positive {
-  background: rgba(16, 185, 129, 0.1);
-  color: var(--success);
-}
-
-.stat-change.negative {
-  background: rgba(239, 68, 68, 0.1);
-  color: var(--danger);
-}
-
-/* ===== CHART CARDS ===== */
-.chart-card {
-  background: var(--card-bg);
-  border-radius: 1rem;
-  padding: 1.5rem;
-  border: 1px solid var(--border-color);
-  box-shadow: 0 2px 8px var(--shadow);
-}
-
-.chart-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5rem;
-}
-
-.chart-title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.chart-filters {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.chart-filter-btn {
-  padding: 0.5rem 1rem;
-  border: 1px solid var(--border-color);
-  background: var(--bg-secondary);
-  color: var(--text-secondary);
-  border-radius: 0.5rem;
-  font-size: 0.875rem;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.chart-filter-btn:hover {
-  border-color: var(--brand);
-  color: var(--brand);
-}
-
-.chart-filter-btn.active {
-  background: var(--brand);
-  color: white;
-  border-color: var(--brand);
-}
-
-.chart-container {
-  position: relative;
-  height: 300px;
-}
-
-/* ===== DATA TABLES ===== */
-.data-card {
-  background: var(--card-bg);
-  border-radius: 1rem;
-  border: 1px solid var(--border-color);
-  overflow: hidden;
-  box-shadow: 0 2px 8px var(--shadow);
-}
-
-.data-card-header {
-  padding: 1.5rem;
-  border-bottom: 1px solid var(--border-color);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: var(--bg-secondary);
-}
-
-.data-card-title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.table-container {
-  overflow-x: auto;
-}
-
-.modern-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.modern-table thead th {
-  background: var(--bg-tertiary);
-  padding: 1rem 1.5rem;
-  text-align: left;
-  font-size: 0.8rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--text-secondary);
-  white-space: nowrap;
-}
-
-.modern-table tbody td {
-  padding: 1rem 1.5rem;
-  border-bottom: 1px solid var(--border-color);
-  color: var(--text-primary);
-  font-size: 0.9rem;
-}
-
-.modern-table tbody tr {
-  transition: background 0.2s;
-}
-
-.modern-table tbody tr:hover {
-  background: var(--bg-tertiary);
-}
-
-.table-actions {
-  display: flex;
-  gap: 0.5rem;
-}
-
-/* ===== BUTTONS ===== */
-.btn {
-  padding: 0.75rem 1.25rem;
-  border-radius: 0.75rem;
-  font-size: 0.9rem;
-  font-weight: 500;
-  border: none;
-  cursor: pointer;
-  transition: all 0.2s;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.btn-primary {
-  background: var(--brand-gradient);
-  color: white;
-}
-
-.btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
-}
-
-.btn-secondary {
-  background: var(--bg-tertiary);
-  color: var(--text-primary);
-  border: 1px solid var(--border-color);
-}
-
-.btn-secondary:hover {
-  background: var(--bg-secondary);
-}
-
-.btn-sm {
-  padding: 0.5rem 0.875rem;
-  font-size: 0.85rem;
-  border-radius: 0.5rem;
-}
-
-.btn-icon {
-  padding: 0.5rem;
-  border-radius: 0.5rem;
-  background: var(--bg-tertiary);
-  border: 1px solid var(--border-color);
-  color: var(--text-primary);
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-icon:hover {
-  background: var(--brand);
-  color: white;
-  border-color: var(--brand);
-}
-
-/* ===== BADGES ===== */
-.badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.375rem 0.75rem;
-  border-radius: 0.5rem;
-  font-size: 0.8rem;
-  font-weight: 600;
-  line-height: 1;
-}
-
-.badge-primary { background: rgba(99, 102, 241, 0.1); color: var(--brand); }
-.badge-success { background: rgba(16, 185, 129, 0.1); color: var(--success); }
-.badge-warning { background: rgba(245, 158, 11, 0.1); color: var(--warning); }
-.badge-danger { background: rgba(239, 68, 68, 0.1); color: var(--danger); }
-.badge-info { background: rgba(59, 130, 246, 0.1); color: var(--info); }
-.badge-secondary { background: var(--bg-tertiary); color: var(--text-secondary); }
-
-/* ===== MODALS ===== */
-.modal-content {
-  background: var(--card-bg);
-  border: 1px solid var(--border-color);
-  border-radius: 1rem;
-  box-shadow: 0 20px 60px var(--shadow);
-}
-
-.modal-header {
-  padding: 1.5rem;
-  border-bottom: 1px solid var(--border-color);
-  background: var(--bg-secondary);
-}
-
-.modal-title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.modal-body {
-  padding: 1.5rem;
-}
-
-.modal-footer {
-  padding: 1rem 1.5rem;
-  border-top: 1px solid var(--border-color);
-  background: var(--bg-secondary);
-}
-
-.form-label {
-  font-size: 0.9rem;
-  font-weight: 500;
-  color: var(--text-primary);
-  margin-bottom: 0.5rem;
-  display: block;
-}
-
-.form-control,
-.form-select {
-  width: 100%;
-  padding: 0.75rem 1rem;
-  border: 1px solid var(--border-color);
-  border-radius: 0.75rem;
-  background: var(--bg-secondary);
-  color: var(--text-primary);
-  font-size: 0.9rem;
-  transition: all 0.2s;
-}
-
-.form-control:focus,
-.form-select:focus {
-  outline: none;
-  border-color: var(--brand);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-  background: var(--bg-primary);
-}
-
-/* ===== CUSTOM ALERT SYSTEM ===== */
-.custom-alert {
-  position: fixed;
-  top: 2rem;
-  right: 2rem;
-  min-width: 320px;
-  max-width: 500px;
-  background: var(--card-bg);
-  border: 1px solid var(--border-color);
-  border-radius: 1rem;
-  padding: 1.25rem;
-  box-shadow: 0 10px 40px var(--shadow);
-  z-index: 10000;
-  animation: slideInRight 0.3s ease;
-  display: flex;
-  align-items: start;
-  gap: 1rem;
-}
-
-@keyframes slideInRight {
-  from {
-    opacity: 0;
-    transform: translateX(100%);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-.custom-alert.alert-success { border-left: 4px solid var(--success); }
-.custom-alert.alert-warning { border-left: 4px solid var(--warning); }
-.custom-alert.alert-danger { border-left: 4px solid var(--danger); }
-.custom-alert.alert-info { border-left: 4px solid var(--info); }
-
-.alert-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 0.75rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.25rem;
-  flex-shrink: 0;
-}
-
-.alert-success .alert-icon { background: rgba(16, 185, 129, 0.1); color: var(--success); }
-.alert-warning .alert-icon { background: rgba(245, 158, 11, 0.1); color: var(--warning); }
-.alert-danger .alert-icon { background: rgba(239, 68, 68, 0.1); color: var(--danger); }
-.alert-info .alert-icon { background: rgba(59, 130, 246, 0.1); color: var(--info); }
-
-.alert-content {
-  flex: 1;
-}
-
-.alert-title {
-  font-weight: 600;
-  font-size: 0.95rem;
-  color: var(--text-primary);
-  margin-bottom: 0.25rem;
-}
-
-.alert-message {
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-}
-
-.alert-close {
-  background: none;
-  border: none;
-  color: var(--text-muted);
-  cursor: pointer;
-  padding: 0.25rem;
-  border-radius: 0.375rem;
-  transition: all 0.2s;
-  flex-shrink: 0;
-}
-
-.alert-close:hover {
-  background: var(--bg-tertiary);
-  color: var(--text-primary);
-}
-
-/* ===== EMAIL COMPOSER ===== */
-.email-composer {
-  background: var(--card-bg);
-  border: 1px solid var(--border-color);
-  border-radius: 1rem;
-  overflow: hidden;
-  margin-bottom: 2rem;
-}
-
-.composer-header {
-  padding: 1.5rem;
-  border-bottom: 1px solid var(--border-color);
-  background: var(--bg-secondary);
-}
-
-.composer-toolbar {
-  padding: 1rem;
-  border-bottom: 1px solid var(--border-color);
-  background: var(--bg-secondary);
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-
-.toolbar-btn {
-  padding: 0.5rem 0.75rem;
-  border: 1px solid var(--border-color);
-  background: var(--bg-primary);
-  color: var(--text-primary);
-  border-radius: 0.5rem;
-  cursor: pointer;
-  transition: all 0.2s;
-  font-size: 0.875rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.toolbar-btn:hover {
-  background: var(--brand);
-  color: white;
-  border-color: var(--brand);
-}
-
-.toolbar-divider {
-  width: 1px;
-  background: var(--border-color);
-  margin: 0 0.5rem;
-}
-
-.composer-editor {
-  min-height: 300px;
-  padding: 1.5rem;
-  font-family: inherit;
-  font-size: 0.9rem;
-  color: var(--text-primary);
-  background: var(--bg-primary);
-  border: none;
-  outline: none;
-  resize: vertical;
-  width: 100%;
-}
-
-.composer-footer {
-  padding: 1rem 1.5rem;
-  border-top: 1px solid var(--border-color);
-  background: var(--bg-secondary);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-/* ===== PAGINATION ===== */
-.pagination-wrapper {
-  padding: 1rem 1.5rem;
-  border-top: 1px solid var(--border-color);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: var(--bg-secondary);
-}
-
-.pagination-info {
-  color: var(--text-secondary);
-  font-size: 0.9rem;
-}
-
-.pagination-controls {
-  display: flex;
-  gap: 0.5rem;
-}
-
-/* ===== EMPTY STATE ===== */
-.empty-state {
-  text-align: center;
-  padding: 4rem 2rem;
-}
-
-.empty-icon {
-  width: 80px;
-  height: 80px;
-  margin: 0 auto 1.5rem;
-  background: var(--bg-tertiary);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 2rem;
-  color: var(--text-muted);
-}
-
-.empty-title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin-bottom: 0.5rem;
-}
-
-.empty-text {
-  color: var(--text-secondary);
-  font-size: 0.95rem;
-  margin-bottom: 1.5rem;
-}
-
-/* ===== RESPONSIVE ===== */
-@media (max-width: 768px) {
-  .sidebar {
-    transform: translateX(-100%);
-  }
-  
-  .sidebar.mobile-open {
-    transform: translateX(0);
-  }
-  
-  .main-content {
-    margin-left: 0;
-    width: 100%;
-  }
-  
-  .content-area {
-    padding: 1rem;
-  }
-  
-  .custom-alert {
-    left: 1rem;
-    right: 1rem;
-    top: 1rem;
-    min-width: auto;
-  }
-  
-  .stat-value {
-    font-size: 1.75rem;
-  }
-  
-  .chart-container {
-    height: 250px;
-  }
-}
-
-/* ===== UTILITY CLASSES ===== */
-.d-flex { display: flex; }
-.flex-column { flex-direction: column; }
-.align-items-center { align-items: center; }
-.align-items-start { align-items: flex-start; }
-.justify-content-between { justify-content: space-between; }
-.gap-1 { gap: 0.25rem; }
-.gap-2 { gap: 0.5rem; }
-.gap-3 { gap: 1rem; }
-.gap-4 { gap: 1.5rem; }
-.mb-2 { margin-bottom: 0.5rem; }
-.mb-3 { margin-bottom: 1rem; }
-.mb-4 { margin-bottom: 1.5rem; }
-.mt-2 { margin-top: 0.5rem; }
-.mt-3 { margin-top: 1rem; }
-.mt-4 { margin-top: 1.5rem; }
-.text-center { text-align: center; }
-.text-start { text-align: left; }
-.fw-bold { font-weight: 600; }
-.d-grid { display: grid; }
-.w-100 { width: 100%; }
+    /* ===== CSS VARIABLES & THEME SYSTEM ===== */
+    :root {
+      --brand: #6366f1;
+      --brand-dark: #4f46e5;
+      --brand-light: #818cf8;
+      --brand-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --info: #3b82f6;
+
+      /* Light Theme (Default) */
+      --bg-primary: #ffffff;
+      --bg-secondary: #f8fafc;
+      --bg-tertiary: #f1f5f9;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --text-muted: #94a3b8;
+      --border-color: #e2e8f0;
+      --sidebar-bg: #ffffff;
+      --card-bg: #ffffff;
+      --shadow: rgba(0, 0, 0, 0.1);
+      --sidebar-width: 280px;
+    }
+
+    [data-theme="dark"] {
+      --bg-primary: #0f172a;
+      --bg-secondary: #1e293b;
+      --bg-tertiary: #334155;
+      --text-primary: #f1f5f9;
+      --text-secondary: #cbd5e1;
+      --text-muted: #94a3b8;
+      --border-color: #334155;
+      --sidebar-bg: #1e293b;
+      --card-bg: #1e293b;
+      --shadow: rgba(0, 0, 0, 0.4);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      overflow-x: hidden;
+    }
+
+    /* ===== LOADING SCREEN ===== */
+    .loading-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: var(--brand-gradient);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      transition: opacity 0.5s ease;
+    }
+
+    .loading-screen.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .loading-logo {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: white;
+      margin-bottom: 2rem;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    .loading-spinner {
+      width: 60px;
+      height: 60px;
+      border: 4px solid rgba(255, 255, 255, 0.2);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+
+      50% {
+        transform: scale(1.05);
+        opacity: 0.9;
+      }
+    }
+
+    /* ===== LOGIN PAGE ===== */
+    .login-container {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--brand-gradient);
+      padding: 2rem;
+    }
+
+    .login-card {
+      background: var(--card-bg);
+      border-radius: 1.5rem;
+      box-shadow: 0 20px 60px var(--shadow);
+      width: 100%;
+      max-width: 450px;
+      padding: 3rem;
+      animation: slideUp 0.5s ease;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .login-logo {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .login-logo i {
+      font-size: 3rem;
+      background: var(--brand-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .login-logo h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 1rem 0 0.5rem;
+    }
+
+    .login-logo p {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+    }
+
+    .btn-login {
+      width: 100%;
+      padding: 0.85rem;
+      background: var(--brand-gradient);
+      border: none;
+      color: white;
+      font-weight: 600;
+      border-radius: 0.75rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-login:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4);
+    }
+
+    .btn-login:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* ===== APP LAYOUT ===== */
+    .app-wrapper {
+      display: none;
+      min-height: 100vh;
+    }
+
+    .app-wrapper.active {
+      display: flex;
+    }
+
+    /* ===== SIDEBAR ===== */
+    .sidebar {
+      width: var(--sidebar-width);
+      background: var(--sidebar-bg);
+      border-right: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 1000;
+      box-shadow: 2px 0 10px var(--shadow);
+    }
+
+    .sidebar-header {
+      padding: 1.5rem;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .sidebar-logo {
+      font-size: 1.5rem;
+      font-weight: 700;
+      background: var(--brand-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .theme-toggle {
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      padding: 0.5rem 0.75rem;
+      cursor: pointer;
+      color: var(--text-primary);
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 1.1rem;
+    }
+
+    .theme-toggle:hover {
+      background: var(--brand);
+      color: white;
+      border-color: var(--brand);
+    }
+
+    .sidebar-nav {
+      flex: 1;
+      padding: 1rem 0;
+      overflow-y: auto;
+    }
+
+    .nav-section {
+      margin-bottom: 1.5rem;
+    }
+
+    .nav-section-title {
+      padding: 0 1.5rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      letter-spacing: 0.05em;
+      margin-bottom: 0.5rem;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      padding: 0.75rem 1.5rem;
+      color: var(--text-secondary);
+      text-decoration: none;
+      cursor: pointer;
+      border-left: 3px solid transparent;
+      transition: all 0.2s;
+    }
+
+    .nav-item:hover {
+      background: var(--bg-tertiary);
+      color: var(--brand);
+    }
+
+    .nav-item.active {
+      background: rgba(99, 102, 241, 0.1);
+      color: var(--brand);
+      border-left-color: var(--brand);
+      font-weight: 600;
+    }
+
+    .nav-item i {
+      width: 24px;
+      font-size: 1.2rem;
+      margin-right: 0.75rem;
+    }
+
+    .sidebar-footer {
+      padding: 1rem 1.5rem;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .user-profile {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem;
+      border-radius: 0.75rem;
+      background: var(--bg-tertiary);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .user-profile:hover {
+      background: var(--bg-secondary);
+    }
+
+    .user-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--brand-gradient);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 600;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+
+    .user-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .user-name {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .user-role {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    /* ===== MAIN CONTENT ===== */
+    .main-content {
+      margin-left: var(--sidebar-width);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      width: calc(100% - var(--sidebar-width));
+    }
+
+    .top-header {
+      background: var(--bg-primary);
+      border-bottom: 1px solid var(--border-color);
+      padding: 1rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 10px var(--shadow);
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex: 1;
+    }
+
+    .search-box {
+      position: relative;
+      max-width: 500px;
+      width: 100%;
+    }
+
+    .search-box input {
+      width: 100%;
+      padding: 0.75rem 3rem 0.75rem 1rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.75rem;
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      font-size: 0.9rem;
+      transition: all 0.2s;
+    }
+
+    .search-box input:focus {
+      outline: none;
+      border-color: var(--brand);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+
+    .search-box i {
+      position: absolute;
+      right: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .btn-header {
+      padding: 0.75rem 1.25rem;
+      border: 1px solid var(--border-color);
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      border-radius: 0.75rem;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.2s;
+    }
+
+    .btn-header:hover {
+      border-color: var(--brand);
+      color: var(--brand);
+      transform: translateY(-1px);
+    }
+
+    .btn-primary-custom {
+      background: var(--brand-gradient);
+      color: white;
+      border: none;
+    }
+
+    .btn-primary-custom:hover {
+      color: white;
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+    }
+
+    .content-area {
+      flex: 1;
+      padding: 2rem;
+      overflow-y: auto;
+    }
+
+    /* ===== VIEW SECTIONS ===== */
+    .view-section {
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .view-section.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .page-header {
+      margin-bottom: 2rem;
+    }
+
+    .page-title {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 0.5rem;
+    }
+
+    .page-subtitle {
+      color: var(--text-secondary);
+      font-size: 1rem;
+    }
+
+    /* ===== STAT CARDS ===== */
+    .stat-card {
+      background: var(--card-bg);
+      border-radius: 1rem;
+      padding: 1.5rem;
+      border: 1px solid var(--border-color);
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s;
+      box-shadow: 0 2px 8px var(--shadow);
+    }
+
+    .stat-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 20px var(--shadow);
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background: var(--brand);
+    }
+
+    .stat-card.success::before {
+      background: var(--success);
+    }
+
+    .stat-card.warning::before {
+      background: var(--warning);
+    }
+
+    .stat-card.danger::before {
+      background: var(--danger);
+    }
+
+    .stat-card.info::before {
+      background: var(--info);
+    }
+
+    .stat-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 1rem;
+    }
+
+    .stat-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 0.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      color: white;
+      flex-shrink: 0;
+    }
+
+    .stat-icon.primary {
+      background: var(--brand);
+    }
+
+    .stat-icon.success {
+      background: var(--success);
+    }
+
+    .stat-icon.warning {
+      background: var(--warning);
+    }
+
+    .stat-icon.danger {
+      background: var(--danger);
+    }
+
+    .stat-icon.info {
+      background: var(--info);
+    }
+
+    .stat-label {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+    }
+
+    .stat-value {
+      font-size: 2.25rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1;
+      margin-bottom: 0.75rem;
+    }
+
+    .stat-change {
+      font-size: 0.85rem;
+      padding: 0.25rem 0.75rem;
+      border-radius: 0.5rem;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    .stat-change.positive {
+      background: rgba(16, 185, 129, 0.1);
+      color: var(--success);
+    }
+
+    .stat-change.negative {
+      background: rgba(239, 68, 68, 0.1);
+      color: var(--danger);
+    }
+
+    /* ===== CHART CARDS ===== */
+    .chart-card {
+      background: var(--card-bg);
+      border-radius: 1rem;
+      padding: 1.5rem;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 2px 8px var(--shadow);
+    }
+
+    .chart-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .chart-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .chart-filters {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .chart-filter-btn {
+      padding: 0.5rem 1rem;
+      border: 1px solid var(--border-color);
+      background: var(--bg-secondary);
+      color: var(--text-secondary);
+      border-radius: 0.5rem;
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .chart-filter-btn:hover {
+      border-color: var(--brand);
+      color: var(--brand);
+    }
+
+    .chart-filter-btn.active {
+      background: var(--brand);
+      color: white;
+      border-color: var(--brand);
+    }
+
+    .chart-container {
+      position: relative;
+      height: 300px;
+    }
+
+    /* ===== DATA TABLES ===== */
+    .data-card {
+      background: var(--card-bg);
+      border-radius: 1rem;
+      border: 1px solid var(--border-color);
+      overflow: hidden;
+      box-shadow: 0 2px 8px var(--shadow);
+    }
+
+    .data-card-header {
+      padding: 1.5rem;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--bg-secondary);
+    }
+
+    .data-card-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .table-container {
+      overflow-x: auto;
+    }
+
+    .modern-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .modern-table thead th {
+      background: var(--bg-tertiary);
+      padding: 1rem 1.5rem;
+      text-align: left;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-secondary);
+      white-space: nowrap;
+    }
+
+    .modern-table tbody td {
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid var(--border-color);
+      color: var(--text-primary);
+      font-size: 0.9rem;
+    }
+
+    .modern-table tbody tr {
+      transition: background 0.2s;
+    }
+
+    .modern-table tbody tr:hover {
+      background: var(--bg-tertiary);
+    }
+
+    .table-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    /* ===== BUTTONS ===== */
+    .btn {
+      padding: 0.75rem 1.25rem;
+      border-radius: 0.75rem;
+      font-size: 0.9rem;
+      font-weight: 500;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .btn-primary {
+      background: var(--brand-gradient);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+    }
+
+    .btn-secondary {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+    }
+
+    .btn-secondary:hover {
+      background: var(--bg-secondary);
+    }
+
+    .btn-sm {
+      padding: 0.5rem 0.875rem;
+      font-size: 0.85rem;
+      border-radius: 0.5rem;
+    }
+
+    .btn-icon {
+      padding: 0.5rem;
+      border-radius: 0.5rem;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-icon:hover {
+      background: var(--brand);
+      color: white;
+      border-color: var(--brand);
+    }
+
+    /* ===== BADGES ===== */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.375rem 0.75rem;
+      border-radius: 0.5rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      line-height: 1;
+    }
+
+    .badge-primary {
+      background: rgba(99, 102, 241, 0.1);
+      color: var(--brand);
+    }
+
+    .badge-success {
+      background: rgba(16, 185, 129, 0.1);
+      color: var(--success);
+    }
+
+    .badge-warning {
+      background: rgba(245, 158, 11, 0.1);
+      color: var(--warning);
+    }
+
+    .badge-danger {
+      background: rgba(239, 68, 68, 0.1);
+      color: var(--danger);
+    }
+
+    .badge-info {
+      background: rgba(59, 130, 246, 0.1);
+      color: var(--info);
+    }
+
+    .badge-secondary {
+      background: var(--bg-tertiary);
+      color: var(--text-secondary);
+    }
+
+    /* ===== MODALS ===== */
+    .modal-content {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 1rem;
+      box-shadow: 0 20px 60px var(--shadow);
+    }
+
+    .modal-header {
+      padding: 1.5rem;
+      border-bottom: 1px solid var(--border-color);
+      background: var(--bg-secondary);
+    }
+
+    .modal-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .modal-body {
+      padding: 1.5rem;
+    }
+
+    .modal-footer {
+      padding: 1rem 1.5rem;
+      border-top: 1px solid var(--border-color);
+      background: var(--bg-secondary);
+    }
+
+    .form-label {
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--text-primary);
+      margin-bottom: 0.5rem;
+      display: block;
+    }
+
+    .form-control,
+    .form-select {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.75rem;
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      font-size: 0.9rem;
+      transition: all 0.2s;
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+      outline: none;
+      border-color: var(--brand);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+      background: var(--bg-primary);
+    }
+
+    /* ===== CUSTOM ALERT SYSTEM ===== */
+    .custom-alert {
+      position: fixed;
+      top: 2rem;
+      right: 2rem;
+      min-width: 320px;
+      max-width: 500px;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 1rem;
+      padding: 1.25rem;
+      box-shadow: 0 10px 40px var(--shadow);
+      z-index: 10000;
+      animation: slideInRight 0.3s ease;
+      display: flex;
+      align-items: start;
+      gap: 1rem;
+    }
+
+    @keyframes slideInRight {
+      from {
+        opacity: 0;
+        transform: translateX(100%);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    .custom-alert.alert-success {
+      border-left: 4px solid var(--success);
+    }
+
+    .custom-alert.alert-warning {
+      border-left: 4px solid var(--warning);
+    }
+
+    .custom-alert.alert-danger {
+      border-left: 4px solid var(--danger);
+    }
+
+    .custom-alert.alert-info {
+      border-left: 4px solid var(--info);
+    }
+
+    .alert-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 0.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      flex-shrink: 0;
+    }
+
+    .alert-success .alert-icon {
+      background: rgba(16, 185, 129, 0.1);
+      color: var(--success);
+    }
+
+    .alert-warning .alert-icon {
+      background: rgba(245, 158, 11, 0.1);
+      color: var(--warning);
+    }
+
+    .alert-danger .alert-icon {
+      background: rgba(239, 68, 68, 0.1);
+      color: var(--danger);
+    }
+
+    .alert-info .alert-icon {
+      background: rgba(59, 130, 246, 0.1);
+      color: var(--info);
+    }
+
+    .alert-content {
+      flex: 1;
+    }
+
+    .alert-title {
+      font-weight: 600;
+      font-size: 0.95rem;
+      color: var(--text-primary);
+      margin-bottom: 0.25rem;
+    }
+
+    .alert-message {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+
+    .alert-close {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 0.25rem;
+      border-radius: 0.375rem;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+
+    .alert-close:hover {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+    }
+
+    /* ===== EMAIL COMPOSER ===== */
+    .email-composer {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 1rem;
+      overflow: hidden;
+      margin-bottom: 2rem;
+    }
+
+    .composer-header {
+      padding: 1.5rem;
+      border-bottom: 1px solid var(--border-color);
+      background: var(--bg-secondary);
+    }
+
+    .composer-toolbar {
+      padding: 1rem;
+      border-bottom: 1px solid var(--border-color);
+      background: var(--bg-secondary);
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .toolbar-btn {
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--border-color);
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 0.875rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .toolbar-btn:hover {
+      background: var(--brand);
+      color: white;
+      border-color: var(--brand);
+    }
+
+    .toolbar-divider {
+      width: 1px;
+      background: var(--border-color);
+      margin: 0 0.5rem;
+    }
+
+    .composer-editor {
+      min-height: 300px;
+      padding: 1.5rem;
+      font-family: inherit;
+      font-size: 0.9rem;
+      color: var(--text-primary);
+      background: var(--bg-primary);
+      border: none;
+      outline: none;
+      resize: vertical;
+      width: 100%;
+    }
+
+    .composer-footer {
+      padding: 1rem 1.5rem;
+      border-top: 1px solid var(--border-color);
+      background: var(--bg-secondary);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* ===== PAGINATION ===== */
+    .pagination-wrapper {
+      padding: 1rem 1.5rem;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--bg-secondary);
+    }
+
+    .pagination-info {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+
+    .pagination-controls {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    /* ===== EMPTY STATE ===== */
+    .empty-state {
+      text-align: center;
+      padding: 4rem 2rem;
+    }
+
+    .empty-icon {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 1.5rem;
+      background: var(--bg-tertiary);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      color: var(--text-muted);
+    }
+
+    .empty-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 0.5rem;
+    }
+
+    .empty-text {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      margin-bottom: 1.5rem;
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 768px) {
+      .sidebar {
+        transform: translateX(-100%);
+      }
+
+      .sidebar.mobile-open {
+        transform: translateX(0);
+      }
+
+      .main-content {
+        margin-left: 0;
+        width: 100%;
+      }
+
+      .content-area {
+        padding: 1rem;
+      }
+
+      .custom-alert {
+        left: 1rem;
+        right: 1rem;
+        top: 1rem;
+        min-width: auto;
+      }
+
+      .stat-value {
+        font-size: 1.75rem;
+      }
+
+      .chart-container {
+        height: 250px;
+      }
+    }
+
+    /* ===== UTILITY CLASSES ===== */
+    .d-flex {
+      display: flex;
+    }
+
+    .flex-column {
+      flex-direction: column;
+    }
+
+    .align-items-center {
+      align-items: center;
+    }
+
+    .align-items-start {
+      align-items: flex-start;
+    }
+
+    .justify-content-between {
+      justify-content: space-between;
+    }
+
+    .gap-1 {
+      gap: 0.25rem;
+    }
+
+    .gap-2 {
+      gap: 0.5rem;
+    }
+
+    .gap-3 {
+      gap: 1rem;
+    }
+
+    .gap-4 {
+      gap: 1.5rem;
+    }
+
+    .mb-2 {
+      margin-bottom: 0.5rem;
+    }
+
+    .mb-3 {
+      margin-bottom: 1rem;
+    }
+
+    .mb-4 {
+      margin-bottom: 1.5rem;
+    }
+
+    .mt-2 {
+      margin-top: 0.5rem;
+    }
+
+    .mt-3 {
+      margin-top: 1rem;
+    }
+
+    .mt-4 {
+      margin-top: 1.5rem;
+    }
+
+    .text-center {
+      text-align: center;
+    }
+
+    .text-start {
+      text-align: left;
+    }
+
+    .fw-bold {
+      font-weight: 600;
+    }
+
+    .d-grid {
+      display: grid;
+    }
+
+    .w-100 {
+      width: 100%;
+    }
   </style>
 </head>
 
@@ -1117,30 +1277,30 @@ body {
         <h1>CRM Core</h1>
         <p>Modern Business Management for SMBs</p>
       </div>
-      
+
       <form id="loginForm" class="mt-4">
         <div class="mb-3">
           <label class="form-label">Email Address</label>
           <input type="email" class="form-control" id="loginEmail" placeholder="you@company.com" required>
         </div>
-        
+
         <div class="mb-3">
           <label class="form-label">Password</label>
           <input type="password" class="form-control" id="loginPassword" placeholder="Enter your password" required>
         </div>
-        
+
         <div class="mb-3 form-check">
           <input type="checkbox" class="form-check-input" id="rememberMe">
           <label class="form-check-label" for="rememberMe">Remember me</label>
         </div>
-        
+
         <button type="submit" class="btn-login" id="loginBtn">
           <i class="bi bi-box-arrow-in-right"></i> Sign In
         </button>
-        
+
         <div id="loginError" class="alert alert-danger mt-3" style="display: none;"></div>
       </form>
-      
+
       <div class="text-center mt-4">
         <small style="color: var(--text-muted);">
           Demo: Use any email from Users sheet
@@ -1162,7 +1322,7 @@ body {
           <i class="bi bi-moon-stars" id="themeIcon"></i>
         </button>
       </div>
-      
+
       <nav class="sidebar-nav">
         <div class="nav-section">
           <div class="nav-section-title">Main</div>
@@ -1171,7 +1331,7 @@ body {
             Dashboard
           </a>
         </div>
-        
+
         <div class="nav-section">
           <div class="nav-section-title">Sales</div>
           <a class="nav-item" data-page="contacts">
@@ -1187,7 +1347,7 @@ body {
             Deals
           </a>
         </div>
-        
+
         <div class="nav-section">
           <div class="nav-section-title">Activity</div>
           <a class="nav-item" data-page="tasks">
@@ -1199,7 +1359,7 @@ body {
             Email
           </a>
         </div>
-        
+
         <div class="nav-section">
           <div class="nav-section-title">Insights</div>
           <a class="nav-item" data-page="reports">
@@ -1207,7 +1367,7 @@ body {
             Reports
           </a>
         </div>
-        
+
         <div class="nav-section">
           <div class="nav-section-title">Settings</div>
           <a class="nav-item" data-page="admin">
@@ -1216,7 +1376,7 @@ body {
           </a>
         </div>
       </nav>
-      
+
       <div class="sidebar-footer">
         <div class="user-profile" id="userProfile">
           <div class="user-avatar" id="userAvatar">U</div>
@@ -1240,7 +1400,7 @@ body {
             <i class="bi bi-search"></i>
           </div>
         </div>
-        
+
         <div class="header-actions">
           <button class="btn-header" id="notificationsBtn">
             <i class="bi bi-bell"></i> Notifications
@@ -1341,7 +1501,7 @@ body {
                 </div>
               </div>
             </div>
-            
+
             <div class="col-md-4">
               <div class="chart-card">
                 <div class="chart-header">
@@ -1366,7 +1526,7 @@ body {
                 </div>
               </div>
             </div>
-            
+
             <div class="col-md-6">
               <div class="chart-card">
                 <div class="chart-header">
@@ -1399,7 +1559,7 @@ body {
                 <i class="bi bi-arrow-clockwise"></i> Refresh
               </button>
             </div>
-            
+
             <div class="table-container">
               <table class="modern-table">
                 <thead>
@@ -1412,11 +1572,13 @@ body {
                   </tr>
                 </thead>
                 <tbody id="contactsTableBody">
-                  <tr><td colspan="5" class="text-center">Loading...</td></tr>
+                  <tr>
+                    <td colspan="5" class="text-center">Loading...</td>
+                  </tr>
                 </tbody>
               </table>
             </div>
-            
+
             <div class="pagination-wrapper">
               <div class="pagination-info">
                 Page <span id="contactsPage">1</span> | Total: <span id="contactsTotalCount">0</span>
@@ -1448,7 +1610,7 @@ body {
                 <i class="bi bi-arrow-clockwise"></i> Refresh
               </button>
             </div>
-            
+
             <div class="table-container">
               <table class="modern-table">
                 <thead>
@@ -1463,7 +1625,7 @@ body {
                 <tbody id="companiesTableBody"></tbody>
               </table>
             </div>
-            
+
             <div class="pagination-wrapper">
               <div class="pagination-info">
                 Page <span id="companiesPage">1</span> | Total: <span id="companiesTotalCount">0</span>
@@ -1495,7 +1657,7 @@ body {
                 <i class="bi bi-arrow-clockwise"></i> Refresh
               </button>
             </div>
-            
+
             <div class="table-container">
               <table class="modern-table">
                 <thead>
@@ -1511,7 +1673,7 @@ body {
                 <tbody id="dealsTableBody"></tbody>
               </table>
             </div>
-            
+
             <div class="pagination-wrapper">
               <div class="pagination-info">
                 Page <span id="dealsPage">1</span> | Total: <span id="dealsTotalCount">0</span>
@@ -1543,7 +1705,7 @@ body {
                 <i class="bi bi-arrow-clockwise"></i> Refresh
               </button>
             </div>
-            
+
             <div class="table-container">
               <table class="modern-table">
                 <thead>
@@ -1558,7 +1720,7 @@ body {
                 <tbody id="tasksTableBody"></tbody>
               </table>
             </div>
-            
+
             <div class="pagination-wrapper">
               <div class="pagination-info">
                 Page <span id="tasksPage">1</span> | Total: <span id="tasksTotalCount">0</span>
@@ -1577,7 +1739,7 @@ body {
             <h1 class="page-title"><i class="bi bi-bar-chart"></i> Reports & Analytics</h1>
             <p class="page-subtitle">Gain insights from your data</p>
           </div>
-          
+
           <div class="data-card">
             <div class="empty-state">
               <div class="empty-icon">
@@ -1621,7 +1783,7 @@ body {
             <div class="data-card-header">
               <h3 class="data-card-title">Users</h3>
             </div>
-            
+
             <div class="table-container">
               <table class="modern-table">
                 <thead>
@@ -1672,7 +1834,7 @@ body {
                 <input type="text" class="form-control" id="emailSubject" placeholder="Email subject">
               </div>
             </div>
-            
+
             <div class="composer-toolbar">
               <button class="toolbar-btn" onclick="formatText('bold')" title="Bold">
                 <i class="bi bi-type-bold"></i>
@@ -1695,11 +1857,11 @@ body {
                 <i class="bi bi-link-45deg"></i>
               </button>
             </div>
-            
+
             <div contenteditable="true" class="composer-editor" id="emailBody">
               <p>Start typing your email...</p>
             </div>
-            
+
             <div class="composer-footer">
               <button class="btn btn-secondary" onclick="closeEmailComposer()">
                 <i class="bi bi-x-lg"></i> Cancel
@@ -1712,9 +1874,9 @@ body {
 
           <!-- Email Log Table -->
           <div class="data-card mt-4">
-            <div class="data-card-header">
+            <div class="data-card-header d-flex justify-content-between align-items-center">
               <h3 class="data-card-title">Email Log</h3>
-              <button class="btn-sm" onclick="loadEmailLog()">
+              <button class="btn-sm" id="refreshEmail">
                 <i class="bi bi-arrow-clockwise"></i> Refresh
               </button>
             </div>
@@ -1731,12 +1893,20 @@ body {
                 </thead>
                 <tbody id="emailLogTable">
                   <tr>
-                    <td colspan="5" class="text-center">No emails yet</td>
+                    <td colspan="5" class="text-center text-muted">No emails yet</td>
                   </tr>
                 </tbody>
               </table>
             </div>
+
+            <!-- Pagination Controls -->
+            <div class="d-flex justify-content-between align-items-center mt-2">
+              <button class="btn btn-sm btn-secondary" id="prevPageEmail">Previous</button>
+              <span class="page-info" id="emailPageInfo">Page 1</span>
+              <button class="btn btn-sm btn-secondary" id="nextPageEmail">Next</button>
+            </div>
           </div>
+
         </div>
 
       </div>
@@ -1744,7 +1914,7 @@ body {
   </div>
 
   <!-- MODALS -->
-  
+
   <!-- Contact Modal -->
   <div class="modal fade" id="contactModal" tabindex="-1">
     <div class="modal-dialog">
@@ -1965,16 +2135,33 @@ body {
   </div>
 
   <script>
+    // ===== CLIENT-SIDE CACHE UTILITY =====
+      function cachedCall(key, fetchFunc, callback, ttl = 300000) { // default TTL 5 min
+        const cached = localStorage.getItem(key);
+        const timestamp = localStorage.getItem(key + '_ts');
+        const now = Date.now();
+
+        if (cached && timestamp && now - timestamp < ttl) {
+          callback(JSON.parse(cached));
+        } else {
+          fetchFunc(function(data) {
+            localStorage.setItem(key, JSON.stringify(data));
+            localStorage.setItem(key + '_ts', now);
+            callback(data);
+          });
+        }
+      }
+
     (function() {
       'use strict';
-      
+          
       // ===== OPTIMIZED API CLIENT =====
       // Provides XMLHttpRequest support for async, non-blocking server calls
       // Can fall back to google.script.run when XMLHttpRequest is not available
       
       const API_CONFIG = {
-        useXHR: false, // Set to true to enable XMLHttpRequest (requires deployed web app URL)
-        deploymentUrl: '', // Set this to your deployed web app URL when useXHR is true
+        useXHR: true, // Set to true to enable XMLHttpRequest (requires deployed web app URL)
+        deploymentUrl: 'https://script.google.com/macros/s/AKfycbxQ7wvz5KRy7Zrs_wRHIdbLClHKkzmj4SGj3Z8-6Trw/dev', // Set this to your deployed web app URL when useXHR is true
         defaultTimeout: 30000 // 30 seconds timeout
       };
       
@@ -2190,6 +2377,16 @@ body {
       window.ApiClient = ApiClient;
       
       let currentUser = null;
+      // ===== CLIENT-SIDE TAB CACHE =====
+      const tabCache = {
+        contacts: null,
+        companies: null,
+        deals: null,
+        tasks: null,
+        email: null  // added email cache
+      };
+
+
       let currentView = 'dashboard';
       let revenueChart, dealDistChart, pipelineChart, taskChart;
       
@@ -2243,6 +2440,28 @@ body {
         }, 5000);
       }
       window.showAlert = showAlert;
+
+      // ===== PRELOAD ==========
+      function preloadAllPages() {
+  const pageLoaders = {
+    dashboard: initDashboard,
+    contacts: initContacts,
+    companies: initCompanies,
+    deals: initDeals,
+    tasks: initTasks,
+    email: initEmail,
+    admin: initAdmin
+  };
+
+  Object.keys(pageLoaders).forEach(page => {
+    // Use setTimeout to avoid blocking UI
+    setTimeout(() => {
+      pageLoaders[page]();
+      console.log(`Preloaded page: ${page}`);
+    }, 50);
+  });
+}
+
       
       // ===== LOGIN HANDLING =====
       function showLogin() {
@@ -2278,17 +2497,14 @@ body {
               document.getElementById('userRole').textContent = user.role || 'User';
               
               // Warm cache after login for instant performance (async - non-blocking)
-              setTimeout(function() {
-                google.script.run
-                  .withSuccessHandler(function(result) {
-                    console.log('✅ Cache preloaded in ' + (result.executionTime || 0) + 'ms');
-                  })
-                  .withFailureHandler(function(error) {
-                    console.warn('Cache warming failed:', error);
-                  })
-                  .warmCacheApi();
-              }, 100); // Delay to not block UI
-              
+              setTimeout(() => {
+                ApiClient.call('warmCache', {}, function(result) {
+                  console.log('✅ Cache preloaded in ' + (result.executionTime || 0) + 'ms');
+                }, function(err) {
+                  console.warn('Cache warming failed:', err);
+                });
+              }, 50); // non-blocking, slight delay
+
               showApp();
               hideLoadingScreen();
               showView('dashboard');
@@ -2320,23 +2536,30 @@ body {
       }
       
       function checkStoredLogin() {
-        const stored = localStorage.getItem('crmUser');
-        if (stored) {
-          try {
-            currentUser = JSON.parse(stored);
-            const initials = currentUser.display_name ? currentUser.display_name.split(' ').map(n => n[0]).join('').toUpperCase() : 'U';
-            document.getElementById('userAvatar').textContent = initials;
-            document.getElementById('userName').textContent = currentUser.display_name || currentUser.email;
-            document.getElementById('userRole').textContent = currentUser.role || 'User';
-            showApp();
-          } catch (e) {
-            localStorage.removeItem('crmUser');
-            showLogin();
-          }
-        } else {
-          showLogin();
-        }
-      }
+  const stored = localStorage.getItem('crmUser');
+  if (stored) {
+    try {
+      currentUser = JSON.parse(stored);
+      const initials = currentUser.display_name ? currentUser.display_name.split(' ').map(n => n[0]).join('').toUpperCase() : 'U';
+      document.getElementById('userAvatar').textContent = initials;
+      document.getElementById('userName').textContent = currentUser.display_name || currentUser.email;
+      document.getElementById('userRole').textContent = currentUser.role || 'User';
+      showApp();
+
+      // Automatically show dashboard first
+      showView('dashboard');
+
+      // Step 2: preload other pages asynchronously
+      preloadAllPages();
+    } catch (e) {
+      localStorage.removeItem('crmUser');
+      showLogin();
+    }
+  } else {
+    showLogin();
+  }
+}
+
       
       function hideLoadingScreen() {
         setTimeout(function() {
@@ -2401,206 +2624,224 @@ body {
       
       // ===== DASHBOARD =====
       function initDashboard() {
-        const startTime = performance.now();
-        
-        // STAGE 1: Ultra-fast initial load (instant counts)
-        google.script.run
-          .withSuccessHandler(function(stats) {
-            // Display initial counts immediately
+          const startTime = performance.now();
+
+          // Stage 1: Load quick stats from cache or API
+          cachedCall('quickStats', function(cb) {
+            google.script.run.withSuccessHandler(cb).getQuickStatsApi();
+          }, function(stats) {
             document.getElementById('statContacts').textContent = stats.contacts || 0;
             document.getElementById('statCompanies').textContent = stats.companies || 0;
             document.getElementById('statOpenDeals').textContent = stats.openDeals || stats.totalDeals || 0;
             document.getElementById('statDealValue').textContent = '$' + (stats.totalDealValue || 0).toLocaleString() + ' total value';
             document.getElementById('statPendingTasks').textContent = stats.pendingTasks || stats.totalTasks || 0;
-            
-            const loadTime = Math.round(performance.now() - startTime);
-            console.log('⚡ Dashboard loaded in ' + loadTime + 'ms (from cache)');
-            
-            // STAGE 2: Load full stats in background if needed
-            if (stats.quickMode) {
-              google.script.run
-                .withSuccessHandler(function(fullStats) {
-                  document.getElementById('statOpenDeals').textContent = fullStats.openDeals || 0;
-                  document.getElementById('statDealValue').textContent = '$' + (fullStats.totalDealValue || 0).toLocaleString() + ' total value';
-                  document.getElementById('statPendingTasks').textContent = fullStats.pendingTasks || 0;
-                  console.log('✓ Full stats loaded in background');
-                })
-                .getCachedStatsApi();
-            }
-          })
-          .getQuickStatsApi();  // ULTRA-FAST: Instant load with counts only
-          
-        initDashboardCharts();
-      }
+
+            console.log('⚡ Dashboard quick stats loaded in ' + Math.round(performance.now() - startTime) + 'ms');
+
+            // Stage 2: Load full stats in background
+            setTimeout(() => {
+              google.script.run.withSuccessHandler(function(fullStats) {
+                document.getElementById('statOpenDeals').textContent = fullStats.openDeals || 0;
+                document.getElementById('statDealValue').textContent = '$' + (fullStats.totalDealValue || 0).toLocaleString() + ' total value';
+                document.getElementById('statPendingTasks').textContent = fullStats.pendingTasks || 0;
+                console.log('✓ Full stats loaded in background');
+              }).getCachedStatsApi();
+            }, 100);
+          });
+
+          // Stage 3: Lazy-load charts
+          window.requestIdleCallback(initDashboardCharts);
+        }
+
       
       function initDashboardCharts() {
-        if (typeof Chart === 'undefined') return;
-        
-        // Revenue Chart
-        const revenueCtx = document.getElementById('revenueChart');
-        if (revenueCtx) {
-          revenueChart = new Chart(revenueCtx, {
-            type: 'line',
-            data: {
-              labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-              datasets: [{
-                label: 'Revenue',
-                data: [45000, 52000, 48000, 61000, 58000, 67000],
-                borderColor: '#6366f1',
-                backgroundColor: 'rgba(99, 102, 241, 0.1)',
-                tension: 0.4,
-                fill: true
-              }]
-            },
-            options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              plugins: {
-                legend: { display: false },
-                tooltip: {
-                  callbacks: {
-                    label: (ctx) => `Revenue: $${ctx.parsed.y.toLocaleString()}`
-                  }
-                }
-              }
+  if (typeof Chart === 'undefined') return;
+
+  // Helper to initialize a chart if its element exists
+  function initChart(ctxId, config) {
+    const ctx = document.getElementById(ctxId);
+    if (ctx) return new Chart(ctx, config);
+    return null;
+  }
+
+  // Use requestIdleCallback for non-blocking chart rendering
+  if ('requestIdleCallback' in window) {
+    window.requestIdleCallback(() => {
+      // Revenue Chart
+      revenueChart = initChart('revenueChart', {
+        type: 'line',
+        data: {
+          labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+          datasets: [{
+            label: 'Revenue',
+            data: [45000, 52000, 48000, 61000, 58000, 67000],
+            borderColor: '#6366f1',
+            backgroundColor: 'rgba(99, 102, 241, 0.1)',
+            tension: 0.4,
+            fill: true
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: { label: ctx => `Revenue: $${ctx.parsed.y.toLocaleString()}` }
             }
-          });
+          }
         }
-        
-        // Deal Distribution Chart
-        const dealCtx = document.getElementById('dealDistChart');
-        if (dealCtx) {
-          dealDistChart = new Chart(dealCtx, {
-            type: 'doughnut',
-            data: {
-              labels: ['Prospect', 'Qualified', 'Proposal', 'Negotiation', 'Won'],
-              datasets: [{
-                data: [12, 19, 8, 15, 25],
-                backgroundColor: ['#6366f1', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444']
-              }]
-            },
-            options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              plugins: {
-                legend: { position: 'bottom' }
-              }
-            }
-          });
+      });
+
+      // Deal Distribution Chart
+      dealDistChart = initChart('dealDistChart', {
+        type: 'doughnut',
+        data: {
+          labels: ['Prospect', 'Qualified', 'Proposal', 'Negotiation', 'Won'],
+          datasets: [{
+            data: [12, 19, 8, 15, 25],
+            backgroundColor: ['#6366f1', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444']
+          }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+      });
+
+      // Pipeline Chart
+      pipelineChart = initChart('pipelineChart', {
+        type: 'bar',
+        data: {
+          labels: ['Prospect', 'Qualified', 'Proposal', 'Negotiation'],
+          datasets: [{ label: 'Deals', data: [25, 19, 12, 8], backgroundColor: '#6366f1' }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          indexAxis: 'y',
+          plugins: { legend: { display: false } }
         }
-        
-        // Pipeline Chart
-        const pipelineCtx = document.getElementById('pipelineChart');
-        if (pipelineCtx) {
-          pipelineChart = new Chart(pipelineCtx, {
-            type: 'bar',
-            data: {
-              labels: ['Prospect', 'Qualified', 'Proposal', 'Negotiation'],
-              datasets: [{
-                label: 'Deals',
-                data: [25, 19, 12, 8],
-                backgroundColor: '#6366f1'
-              }]
-            },
-            options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              indexAxis: 'y',
-              plugins: {
-                legend: { display: false }
-              }
-            }
-          });
-        }
-        
-        // Task Status Chart
-        const taskCtx = document.getElementById('taskStatusChart');
-        if (taskCtx) {
-          taskChart = new Chart(taskCtx, {
-            type: 'bar',
-            data: {
-              labels: ['Pending', 'In Progress', 'Completed'],
-              datasets: [{
-                label: 'Tasks',
-                data: [15, 8, 32],
-                backgroundColor: ['#f59e0b', '#6366f1', '#10b981']
-              }]
-            },
-            options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              plugins: {
-                legend: { display: false }
-              }
-            }
-          });
-        }
-      }
+      });
+
+      // Task Status Chart
+      taskChart = initChart('taskStatusChart', {
+        type: 'bar',
+        data: {
+          labels: ['Pending', 'In Progress', 'Completed'],
+          datasets: [{ label: 'Tasks', data: [15, 8, 32], backgroundColor: ['#f59e0b', '#6366f1', '#10b981'] }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+      });
+    });
+  } else {
+    // Fallback for browsers without requestIdleCallback
+    setTimeout(initDashboardCharts, 100);
+  }
+}
+
       
       // ===== CONTACTS =====
       let contactsPage = 1;
+
       function initContacts() {
         loadContacts();
-        document.getElementById('refreshContacts').onclick = loadContacts;
-        document.getElementById('prevPageContact').onclick = function() { if(contactsPage > 1) { contactsPage--; loadContacts(); }};
-        document.getElementById('nextPageContact').onclick = function() { contactsPage++; loadContacts(); };
+
+        // Refresh button clears cache and reloads
+        document.getElementById('refreshContacts').onclick = function() {
+          if (tabCache['contacts']) tabCache['contacts'] = null; // clear cached data
+          loadContacts(); // reload fresh
+        };
+
+        document.getElementById('prevPageContact').onclick = function() {
+          if (contactsPage > 1) { 
+            contactsPage--; 
+            loadContacts(); 
+          }
+        };
+
+        document.getElementById('nextPageContact').onclick = function() {
+          contactsPage++; 
+          loadContacts(); 
+        };
+
         document.getElementById('newContactBtn').onclick = function() {
           ['cId','cFirst','cLast','cEmail','cPhone'].forEach(id => document.getElementById(id).value = '');
           new bootstrap.Modal(document.getElementById('contactModal')).show();
         };
+
         document.getElementById('saveContactBtn').onclick = saveContact;
       }
+
       
+      function renderTable(tbody, rows, rowTemplate) {
+  tbody.innerHTML = ''; // clear old rows
+  if (!rows || rows.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-5">No data found</td></tr>';
+    return;
+  }
+
+  const fragment = document.createDocumentFragment();
+  rows.forEach(item => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = rowTemplate(item);
+    fragment.appendChild(tr);
+  });
+  tbody.appendChild(fragment);
+}
+
       function loadContacts() {
         const tbody = document.getElementById('contactsTableBody');
         tbody.innerHTML = '<tr><td colspan="5" class="text-center">Loading...</td></tr>';
-        
-        google.script.run
-          .withSuccessHandler(function(resp) {
-            document.getElementById('contactsPage').textContent = contactsPage;
-            document.getElementById('contactsTotalCount').textContent = resp.total || 0;
-            tbody.innerHTML = '';
-            
-            if (!resp.rows || resp.rows.length === 0) {
-              tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-5">No contacts found</td></tr>';
-              return;
-            }
-            
-            resp.rows.forEach(function(c) {
-              const tr = document.createElement('tr');
-              const name = ((c.first_name||'') + ' ' + (c.last_name||'')).trim();
-              tr.innerHTML = `
-                <td class="fw-bold">${name}</td>
-                <td>${c.email || '-'}</td>
-                <td>${c.phone || '-'}</td>
-                <td>${c.company_id || '-'}</td>
-                <td class="table-actions">
-                  <button class="btn-sm edit-contact" data-id="${c.contact_id}">
-                    <i class="bi bi-pencil"></i> Edit
-                  </button>
-                </td>
-              `;
-              tbody.appendChild(tr);
-            });
-            
-            document.querySelectorAll('.edit-contact').forEach(function(btn) {
-              btn.onclick = function() {
-                const id = this.getAttribute('data-id');
-                google.script.run.withSuccessHandler(function(contact) {
-                  if (contact) {
-                    document.getElementById('cId').value = contact.contact_id || '';
-                    document.getElementById('cFirst').value = contact.first_name || '';
-                    document.getElementById('cLast').value = contact.last_name || '';
-                    document.getElementById('cEmail').value = contact.email || '';
-                    document.getElementById('cPhone').value = contact.phone || '';
-                    new bootstrap.Modal(document.getElementById('contactModal')).show();
-                  }
-                }).getContactApi(id);
-              };
-            });
-          })
-          .listContactsApi({page: contactsPage, pageSize: 10});
+
+        // If cached, render immediately
+        if (tabCache.contacts) {
+          renderContactsTable(tabCache.contacts);
+          // Still fetch new data in background
+          fetchContacts(true);
+        } else {
+          fetchContacts(false);
+        }
       }
+
+      function fetchContacts(isBackground) {
+        google.script.run.withSuccessHandler(function(resp) {
+          tabCache.contacts = resp.rows || [];
+          document.getElementById('contactsPage').textContent = contactsPage;
+          document.getElementById('contactsTotalCount').textContent = resp.total || 0;
+
+          if (!isBackground) renderContactsTable(tabCache.contacts);
+        }).listContactsApi({page: contactsPage, pageSize: 10});
+      }
+
+      function renderContactsTable(rows) {
+        const tbody = document.getElementById('contactsTableBody');
+        renderTable(tbody, rows, c => {
+          const name = ((c.first_name||'') + ' ' + (c.last_name||'')).trim();
+          return `
+            <td class="fw-bold">${name}</td>
+            <td>${c.email || '-'}</td>
+            <td>${c.phone || '-'}</td>
+            <td>${c.company_id || '-'}</td>
+            <td class="table-actions">
+              <button class="btn-sm edit-contact" data-id="${c.contact_id}">
+                <i class="bi bi-pencil"></i> Edit
+              </button>
+            </td>
+          `;
+        });
+
+        // Bind edit buttons
+        tbody.querySelectorAll('.edit-contact').forEach(btn => {
+          btn.onclick = function() {
+            const id = this.dataset.id;
+            google.script.run.withSuccessHandler(contact => {
+              if(contact){
+                ['cId','cFirst','cLast','cEmail','cPhone'].forEach(f => document.getElementById(f).value = contact[f] || '');
+                new bootstrap.Modal(document.getElementById('contactModal')).show();
+              }
+            }).getContactApi(id);
+          };
+        });
+      }
+
       
       function saveContact() {
         const obj = {
@@ -2614,303 +2855,420 @@ body {
         google.script.run
           .withSuccessHandler(function(res) {
             if (res.success) {
-              // Invalidate cache after saving to ensure fresh data
-              google.script.run.invalidateCacheApi('contact');
-              
               bootstrap.Modal.getInstance(document.getElementById('contactModal')).hide();
-              loadContacts();
+
+              // Update cache
+              const idx = tabCache.contacts ? tabCache.contacts.findIndex(c => c.contact_id === obj.contact_id) : -1;
+              if(idx > -1) {
+                tabCache.contacts[idx] = {...obj, contact_id: tabCache.contacts[idx].contact_id};
+              } else {
+                tabCache.contacts = tabCache.contacts || [];
+                obj.contact_id = res.contact_id || Date.now(); // fallback ID
+                tabCache.contacts.unshift(obj);
+              }
+
+              renderContactsTable(tabCache.contacts);
               showAlert('success', 'Contact Saved', `Contact ${obj.first_name} ${obj.last_name} saved successfully`);
             } else {
               showAlert('error', 'Save Failed', res.error || 'Unknown error');
             }
+
           })
           .saveContactApi(obj);
       }
       
       // ===== COMPANIES =====
-      let companiesPage = 1;
+     let companiesPage = 1;
+
       function initCompanies() {
         loadCompanies();
-        document.getElementById('refreshCompanies').onclick = loadCompanies;
-        document.getElementById('prevPageComp').onclick = function() { if(companiesPage > 1) { companiesPage--; loadCompanies(); }};
-        document.getElementById('nextPageComp').onclick = function() { companiesPage++; loadCompanies(); };
+
+        // Refresh button clears cache and reloads
+        document.getElementById('refreshCompanies').onclick = function() {
+          if (tabCache['companies']) tabCache['companies'] = null; // clear cached data
+          loadCompanies(); // reload fresh
+        };
+
+        document.getElementById('prevPageComp').onclick = function() {
+          if (companiesPage > 1) { 
+            companiesPage--; 
+            loadCompanies(); 
+          }
+        };
+
+        document.getElementById('nextPageComp').onclick = function() {
+          companiesPage++; 
+          loadCompanies(); 
+        };
+
         document.getElementById('newCompanyBtn').onclick = function() {
           ['compId','compName','compIndustry','compWebsite','compPhone','compAddress'].forEach(id => document.getElementById(id).value = '');
           new bootstrap.Modal(document.getElementById('companyModal')).show();
         };
+
         document.getElementById('saveCompanyBtn').onclick = saveCompany;
       }
-      
+
+
       function loadCompanies() {
-        const tbody = document.getElementById('companiesTableBody');
-        tbody.innerHTML = '<tr><td colspan="5" class="text-center">Loading...</td></tr>';
-        
-        google.script.run
-          .withSuccessHandler(function(resp) {
-            document.getElementById('companiesPage').textContent = companiesPage;
-            document.getElementById('companiesTotalCount').textContent = resp.total || 0;
-            tbody.innerHTML = '';
-            
-            if (!resp.rows || resp.rows.length === 0) {
-              tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-5">No companies found</td></tr>';
-              return;
-            }
-            
-            resp.rows.forEach(function(c) {
-              const tr = document.createElement('tr');
-              tr.innerHTML = `
-                <td class="fw-bold">${c.name || ''}</td>
-                <td>${c.industry || '-'}</td>
-                <td>${c.website || '-'}</td>
-                <td>${c.phone || '-'}</td>
-                <td class="table-actions">
-                  <button class="btn-sm edit-comp" data-id="${c.company_id}">
-                    <i class="bi bi-pencil"></i> Edit
-                  </button>
-                </td>
-              `;
-              tbody.appendChild(tr);
-            });
-            
-            document.querySelectorAll('.edit-comp').forEach(function(btn) {
-              btn.onclick = function() {
-                const id = this.getAttribute('data-id');
-                google.script.run.withSuccessHandler(function(comp) {
-                  if (comp) {
-                    document.getElementById('compId').value = comp.company_id || '';
-                    document.getElementById('compName').value = comp.name || '';
-                    document.getElementById('compIndustry').value = comp.industry || '';
-                    document.getElementById('compWebsite').value = comp.website || '';
-                    document.getElementById('compPhone').value = comp.phone || '';
-                    document.getElementById('compAddress').value = comp.address || '';
-                    new bootstrap.Modal(document.getElementById('companyModal')).show();
-                  }
-                }).getCompanyApi(id);
-              };
-            });
-          })
-          .listCompaniesApi({page: companiesPage, pageSize: 10});
+  const tbody = document.getElementById('companiesTableBody');
+  tbody.innerHTML = '<tr><td colspan="5" class="text-center">Loading...</td></tr>';
+
+  if (tabCache.companies) {
+    renderCompaniesTable(tabCache.companies);
+    fetchCompanies(true);
+  } else {
+    fetchCompanies(false);
+  }
+}
+
+function fetchCompanies(isBackground) {
+  google.script.run.withSuccessHandler(function(resp) {
+    tabCache.companies = resp.rows || [];
+    document.getElementById('companiesPage').textContent = companiesPage;
+    document.getElementById('companiesTotalCount').textContent = resp.total || 0;
+
+    if (!isBackground) renderCompaniesTable(tabCache.companies);
+  }).listCompaniesApi({page: companiesPage, pageSize: 10});
+}
+
+function renderCompaniesTable(rows) {
+  const tbody = document.getElementById('companiesTableBody');
+  tbody.innerHTML = '';
+
+  if (!rows || rows.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-5">No companies found</td></tr>';
+    return;
+  }
+
+  rows.forEach(c => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="fw-bold">${c.name || ''}</td>
+      <td>${c.industry || '-'}</td>
+      <td>${c.website || '-'}</td>
+      <td>${c.phone || '-'}</td>
+      <td class="table-actions">
+        <button class="btn-sm edit-comp" data-id="${c.company_id}">
+          <i class="bi bi-pencil"></i> Edit
+        </button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  document.querySelectorAll('.edit-comp').forEach(btn => {
+    btn.onclick = function() {
+      const id = this.getAttribute('data-id');
+      google.script.run.withSuccessHandler(comp => {
+        if (comp) {
+          ['compId','compName','compIndustry','compWebsite','compPhone','compAddress'].forEach(f => document.getElementById(f).value = comp[f] || '');
+          new bootstrap.Modal(document.getElementById('companyModal')).show();
+        }
+      }).getCompanyApi(id);
+    };
+  });
+}
+
+function saveCompany() {
+  const obj = {
+    company_id: document.getElementById('compId').value || undefined,
+    name: document.getElementById('compName').value,
+    industry: document.getElementById('compIndustry').value,
+    website: document.getElementById('compWebsite').value,
+    phone: document.getElementById('compPhone').value,
+    address: document.getElementById('compAddress').value
+  };
+
+  google.script.run.withSuccessHandler(res => {
+    if (res.success) {
+      bootstrap.Modal.getInstance(document.getElementById('companyModal')).hide();
+
+      // Update cache
+      const idx = tabCache.companies ? tabCache.companies.findIndex(c => c.company_id === obj.company_id) : -1;
+      if (idx > -1) {
+        tabCache.companies[idx] = {...obj, company_id: tabCache.companies[idx].company_id};
+      } else {
+        tabCache.companies = tabCache.companies || [];
+        obj.company_id = res.company_id || Date.now();
+        tabCache.companies.unshift(obj);
       }
-      
-      function saveCompany() {
-        const obj = {
-          company_id: document.getElementById('compId').value || undefined,
-          name: document.getElementById('compName').value,
-          industry: document.getElementById('compIndustry').value,
-          website: document.getElementById('compWebsite').value,
-          phone: document.getElementById('compPhone').value,
-          address: document.getElementById('compAddress').value
-        };
-        
-        google.script.run
-          .withSuccessHandler(function(res) {
-            if (res.success) {
-              // Invalidate cache after saving to ensure fresh data
-              google.script.run.invalidateCacheApi('company');
-              
-              bootstrap.Modal.getInstance(document.getElementById('companyModal')).hide();
-              loadCompanies();
-              showAlert('success', 'Company Saved', `Company ${obj.name} saved successfully`);
-            } else {
-              showAlert('error', 'Save Failed', res.error || 'Unknown error');
-            }
-          })
-          .saveCompanyApi(obj);
-      }
-      
+
+      renderCompaniesTable(tabCache.companies);
+      showAlert('success', 'Company Saved', `Company ${obj.name} saved successfully`);
+    } else {
+      showAlert('error', 'Save Failed', res.error || 'Unknown error');
+    }
+  }).saveCompanyApi(obj);
+}
+
       // ===== DEALS =====
       let dealsPage = 1;
+
       function initDeals() {
         loadDeals();
-        document.getElementById('refreshDeals').onclick = loadDeals;
-        document.getElementById('prevPageDeal').onclick = function() { if(dealsPage > 1) { dealsPage--; loadDeals(); }};
-        document.getElementById('nextPageDeal').onclick = function() { dealsPage++; loadDeals(); };
+
+        // Refresh button clears cache and reloads
+        document.getElementById('refreshDeals').onclick = function() {
+          if (tabCache['deals']) tabCache['deals'] = null; // clear cached data
+          loadDeals(); // reload fresh
+        };
+
+        document.getElementById('prevPageDeal').onclick = function() {
+          if (dealsPage > 1) {
+            dealsPage--;
+            loadDeals();
+          }
+        };
+
+        document.getElementById('nextPageDeal').onclick = function() {
+          dealsPage++;
+          loadDeals();
+        };
+
         document.getElementById('newDealBtn').onclick = function() {
           ['dealId','dealTitle','dealStage','dealAmount','dealStatus','dealCloseDate'].forEach(id => {
             const el = document.getElementById(id);
-            if(el) el.value = id === 'dealStage' ? 'Prospect' : (id === 'dealStatus' ? 'Open' : '');
+            if (el) el.value = id === 'dealStage' ? 'Prospect' : (id === 'dealStatus' ? 'Open' : '');
           });
           new bootstrap.Modal(document.getElementById('dealModal')).show();
         };
+
         document.getElementById('saveDealBtn').onclick = saveDeal;
       }
+
       
       function loadDeals() {
-        const tbody = document.getElementById('dealsTableBody');
-        tbody.innerHTML = '<tr><td colspan="6" class="text-center">Loading...</td></tr>';
-        
-        google.script.run
-          .withSuccessHandler(function(resp) {
-            document.getElementById('dealsPage').textContent = dealsPage;
-            document.getElementById('dealsTotalCount').textContent = resp.total || 0;
-            tbody.innerHTML = '';
-            
-            if (!resp.rows || resp.rows.length === 0) {
-              tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-5">No deals found</td></tr>';
-              return;
-            }
-            
-            resp.rows.forEach(function(d) {
-              const tr = document.createElement('tr');
-              const amount = d.amount ? '$' + Number(d.amount).toLocaleString() : '-';
-              const statusClass = d.status === 'Open' ? 'badge-primary' : (d.status === 'Won' ? 'badge-success' : 'badge-secondary');
-              tr.innerHTML = `
-                <td class="fw-bold">${d.title || ''}</td>
-                <td>${d.stage || '-'}</td>
-                <td>${amount}</td>
-                <td><span class="badge ${statusClass}">${d.status || '-'}</span></td>
-                <td>${d.close_date || '-'}</td>
-                <td class="table-actions">
-                  <button class="btn-sm edit-deal" data-id="${d.deal_id}">
-                    <i class="bi bi-pencil"></i> Edit
-                  </button>
-                </td>
-              `;
-              tbody.appendChild(tr);
-            });
-            
-            document.querySelectorAll('.edit-deal').forEach(function(btn) {
-              btn.onclick = function() {
-                const id = this.getAttribute('data-id');
-                google.script.run.withSuccessHandler(function(deal) {
-                  if (deal) {
-                    document.getElementById('dealId').value = deal.deal_id || '';
-                    document.getElementById('dealTitle').value = deal.title || '';
-                    document.getElementById('dealStage').value = deal.stage || 'Prospect';
-                    document.getElementById('dealAmount').value = deal.amount || '';
-                    document.getElementById('dealStatus').value = deal.status || 'Open';
-                    document.getElementById('dealCloseDate').value = deal.close_date || '';
-                    new bootstrap.Modal(document.getElementById('dealModal')).show();
-                  }
-                }).getDealApi(id);
-              };
-            });
-          })
-          .listDealsApi({page: dealsPage, pageSize: 10});
+  const tbody = document.getElementById('dealsTableBody');
+  tbody.innerHTML = '<tr><td colspan="6" class="text-center">Loading...</td></tr>';
+
+  if (tabCache.deals) {
+    renderDealsTable(tabCache.deals);
+    fetchDeals(true);
+  } else {
+    fetchDeals(false);
+  }
+}
+
+function fetchDeals(isBackground) {
+  google.script.run.withSuccessHandler(resp => {
+    tabCache.deals = resp.rows || [];
+    document.getElementById('dealsPage').textContent = dealsPage;
+    document.getElementById('dealsTotalCount').textContent = resp.total || 0;
+
+    if (!isBackground) renderDealsTable(tabCache.deals);
+  }).listDealsApi({page: dealsPage, pageSize: 10});
+}
+
+function renderDealsTable(rows) {
+  const tbody = document.getElementById('dealsTableBody');
+  tbody.innerHTML = '';
+
+  if (!rows || rows.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-5">No deals found</td></tr>';
+    return;
+  }
+
+  rows.forEach(d => {
+    const amount = d.amount ? '$' + Number(d.amount).toLocaleString() : '-';
+    const statusClass = d.status === 'Open' ? 'badge-primary' : (d.status === 'Won' ? 'badge-success' : 'badge-secondary');
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="fw-bold">${d.title || ''}</td>
+      <td>${d.stage || '-'}</td>
+      <td>${amount}</td>
+      <td><span class="badge ${statusClass}">${d.status || '-'}</span></td>
+      <td>${d.close_date || '-'}</td>
+      <td class="table-actions">
+        <button class="btn-sm edit-deal" data-id="${d.deal_id}">
+          <i class="bi bi-pencil"></i> Edit
+        </button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  document.querySelectorAll('.edit-deal').forEach(btn => {
+    btn.onclick = function() {
+      const id = this.getAttribute('data-id');
+      google.script.run.withSuccessHandler(deal => {
+        if (deal) {
+          ['dealId','dealTitle','dealStage','dealAmount','dealStatus','dealCloseDate'].forEach(f => {
+            const el = document.getElementById(f);
+            if(el) el.value = deal[f] || (f==='dealStage' ? 'Prospect' : (f==='dealStatus' ? 'Open' : ''));
+          });
+          new bootstrap.Modal(document.getElementById('dealModal')).show();
+        }
+      }).getDealApi(id);
+    };
+  });
+}
+
+function saveDeal() {
+  const obj = {
+    deal_id: document.getElementById('dealId').value || undefined,
+    title: document.getElementById('dealTitle').value,
+    stage: document.getElementById('dealStage').value,
+    amount: document.getElementById('dealAmount').value,
+    status: document.getElementById('dealStatus').value,
+    close_date: document.getElementById('dealCloseDate').value
+  };
+
+  google.script.run.withSuccessHandler(res => {
+    if (res.success) {
+      bootstrap.Modal.getInstance(document.getElementById('dealModal')).hide();
+
+      // Update cache
+      const idx = tabCache.deals ? tabCache.deals.findIndex(d => d.deal_id === obj.deal_id) : -1;
+      if (idx > -1) {
+        tabCache.deals[idx] = {...obj, deal_id: tabCache.deals[idx].deal_id};
+      } else {
+        tabCache.deals = tabCache.deals || [];
+        obj.deal_id = res.deal_id || Date.now();
+        tabCache.deals.unshift(obj);
       }
-      
-      function saveDeal() {
-        const obj = {
-          deal_id: document.getElementById('dealId').value || undefined,
-          title: document.getElementById('dealTitle').value,
-          stage: document.getElementById('dealStage').value,
-          amount: document.getElementById('dealAmount').value,
-          status: document.getElementById('dealStatus').value,
-          close_date: document.getElementById('dealCloseDate').value
-        };
-        
-        google.script.run
-          .withSuccessHandler(function(res) {
-            if (res.success) {
-              // Invalidate cache after saving to ensure fresh data
-              google.script.run.invalidateCacheApi('deal');
-              
-              bootstrap.Modal.getInstance(document.getElementById('dealModal')).hide();
-              loadDeals();
-              showAlert('success', 'Deal Saved', `Deal "${obj.title}" saved successfully`);
-            } else {
-              showAlert('error', 'Save Failed', res.error || 'Unknown error');
-            }
-          })
-          .saveDealApi(obj);
-      }
-      
+
+      renderDealsTable(tabCache.deals);
+      showAlert('success', 'Deal Saved', `Deal "${obj.title}" saved successfully`);
+    } else {
+      showAlert('error', 'Save Failed', res.error || 'Unknown error');
+    }
+  }).saveDealApi(obj);
+}
+
       // ===== TASKS =====
       let tasksPage = 1;
+
       function initTasks() {
         loadTasks();
-        document.getElementById('refreshTasks').onclick = loadTasks;
-        document.getElementById('prevPageTask').onclick = function() { if(tasksPage > 1) { tasksPage--; loadTasks(); }};
-        document.getElementById('nextPageTask').onclick = function() { tasksPage++; loadTasks(); };
+
+        // Refresh button clears cache and reloads
+        document.getElementById('refreshTasks').onclick = function() {
+          if (tabCache['tasks']) tabCache['tasks'] = null; // clear cached data
+          loadTasks(); // reload fresh
+        };
+
+        document.getElementById('prevPageTask').onclick = function() {
+          if (tasksPage > 1) {
+            tasksPage--;
+            loadTasks();
+          }
+        };
+
+        document.getElementById('nextPageTask').onclick = function() {
+          tasksPage++;
+          loadTasks();
+        };
+
         document.getElementById('newTaskBtn').onclick = function() {
           ['taskId','taskSubject','taskDescription','taskPriority','taskStatus','taskDueDate'].forEach(id => {
             const el = document.getElementById(id);
-            if(el) el.value = id === 'taskPriority' ? 'Medium' : (id === 'taskStatus' ? 'Pending' : '');
+            if (el) el.value = id === 'taskPriority' ? 'Medium' : (id === 'taskStatus' ? 'Pending' : '');
           });
           new bootstrap.Modal(document.getElementById('taskModal')).show();
         };
+
         document.getElementById('saveTaskBtn').onclick = saveTask;
       }
+
       
       function loadTasks() {
-        const tbody = document.getElementById('tasksTableBody');
-        tbody.innerHTML = '<tr><td colspan="5" class="text-center">Loading...</td></tr>';
-        
-        google.script.run
-          .withSuccessHandler(function(resp) {
-            document.getElementById('tasksPage').textContent = tasksPage;
-            document.getElementById('tasksTotalCount').textContent = resp.total || 0;
-            tbody.innerHTML = '';
-            
-            if (!resp.rows || resp.rows.length === 0) {
-              tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-5">No tasks found</td></tr>';
-              return;
-            }
-            
-            resp.rows.forEach(function(t) {
-              const tr = document.createElement('tr');
-              const prioClass = t.priority === 'High' ? 'badge-danger' : (t.priority === 'Medium' ? 'badge-warning' : 'badge-secondary');
-              const statusClass = t.status === 'Completed' ? 'badge-success' : (t.status === 'In Progress' ? 'badge-primary' : 'badge-secondary');
-              tr.innerHTML = `
-                <td class="fw-bold">${t.subject || ''}</td>
-                <td><span class="badge ${prioClass}">${t.priority || '-'}</span></td>
-                <td><span class="badge ${statusClass}">${t.status || '-'}</span></td>
-                <td>${t.due_date || '-'}</td>
-                <td class="table-actions">
-                  <button class="btn-sm edit-task" data-id="${t.task_id}">
-                    <i class="bi bi-pencil"></i> Edit
-                  </button>
-                </td>
-              `;
-              tbody.appendChild(tr);
-            });
-            
-            document.querySelectorAll('.edit-task').forEach(function(btn) {
-              btn.onclick = function() {
-                const id = this.getAttribute('data-id');
-                google.script.run.withSuccessHandler(function(task) {
-                  if (task) {
-                    document.getElementById('taskId').value = task.task_id || '';
-                    document.getElementById('taskSubject').value = task.subject || '';
-                    document.getElementById('taskDescription').value = task.description || '';
-                    document.getElementById('taskPriority').value = task.priority || 'Medium';
-                    document.getElementById('taskStatus').value = task.status || 'Pending';
-                    document.getElementById('taskDueDate').value = task.due_date || '';
-                    new bootstrap.Modal(document.getElementById('taskModal')).show();
-                  }
-                }).getTaskApi(id);
-              };
-            });
-          })
-          .listTasksApi({page: tasksPage, pageSize: 10});
+  const tbody = document.getElementById('tasksTableBody');
+  tbody.innerHTML = '<tr><td colspan="5" class="text-center">Loading...</td></tr>';
+
+  if (tabCache.tasks) {
+    renderTasksTable(tabCache.tasks);
+    fetchTasks(true);
+  } else {
+    fetchTasks(false);
+  }
+}
+
+function fetchTasks(isBackground) {
+  google.script.run.withSuccessHandler(resp => {
+    tabCache.tasks = resp.rows || [];
+    document.getElementById('tasksPage').textContent = tasksPage;
+    document.getElementById('tasksTotalCount').textContent = resp.total || 0;
+
+    if (!isBackground) renderTasksTable(tabCache.tasks);
+  }).listTasksApi({page: tasksPage, pageSize: 10});
+}
+
+function renderTasksTable(rows) {
+  const tbody = document.getElementById('tasksTableBody');
+  tbody.innerHTML = '';
+
+  if (!rows || rows.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-5">No tasks found</td></tr>';
+    return;
+  }
+
+  rows.forEach(t => {
+    const prioClass = t.priority === 'High' ? 'badge-danger' : (t.priority === 'Medium' ? 'badge-warning' : 'badge-secondary');
+    const statusClass = t.status === 'Completed' ? 'badge-success' : (t.status === 'In Progress' ? 'badge-primary' : 'badge-secondary');
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="fw-bold">${t.subject || ''}</td>
+      <td><span class="badge ${prioClass}">${t.priority || '-'}</span></td>
+      <td><span class="badge ${statusClass}">${t.status || '-'}</span></td>
+      <td>${t.due_date || '-'}</td>
+      <td class="table-actions">
+        <button class="btn-sm edit-task" data-id="${t.task_id}">
+          <i class="bi bi-pencil"></i> Edit
+        </button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  document.querySelectorAll('.edit-task').forEach(btn => {
+    btn.onclick = function() {
+      const id = this.getAttribute('data-id');
+      google.script.run.withSuccessHandler(task => {
+        if (task) {
+          ['taskId','taskSubject','taskDescription','taskPriority','taskStatus','taskDueDate'].forEach(f => {
+            const el = document.getElementById(f);
+            if(el) el.value = task[f] || (f==='taskPriority' ? 'Medium' : (f==='taskStatus' ? 'Pending' : ''));
+          });
+          new bootstrap.Modal(document.getElementById('taskModal')).show();
+        }
+      }).getTaskApi(id);
+    };
+  });
+}
+
+function saveTask() {
+  const obj = {
+    task_id: document.getElementById('taskId').value || undefined,
+    subject: document.getElementById('taskSubject').value,
+    description: document.getElementById('taskDescription').value,
+    priority: document.getElementById('taskPriority').value,
+    status: document.getElementById('taskStatus').value,
+    due_date: document.getElementById('taskDueDate').value
+  };
+
+  google.script.run.withSuccessHandler(res => {
+    if (res.success) {
+      bootstrap.Modal.getInstance(document.getElementById('taskModal')).hide();
+
+      // Update cache
+      const idx = tabCache.tasks ? tabCache.tasks.findIndex(t => t.task_id === obj.task_id) : -1;
+      if (idx > -1) {
+        tabCache.tasks[idx] = {...obj, task_id: tabCache.tasks[idx].task_id};
+      } else {
+        tabCache.tasks = tabCache.tasks || [];
+        obj.task_id = res.task_id || Date.now();
+        tabCache.tasks.unshift(obj);
       }
-      
-      function saveTask() {
-        const obj = {
-          task_id: document.getElementById('taskId').value || undefined,
-          subject: document.getElementById('taskSubject').value,
-          description: document.getElementById('taskDescription').value,
-          priority: document.getElementById('taskPriority').value,
-          status: document.getElementById('taskStatus').value,
-          due_date: document.getElementById('taskDueDate').value
-        };
-        
-        google.script.run
-          .withSuccessHandler(function(res) {
-            if (res.success) {
-              // Invalidate cache after saving to ensure fresh data
-              google.script.run.invalidateCacheApi('task');
-              
-              bootstrap.Modal.getInstance(document.getElementById('taskModal')).hide();
-              loadTasks();
-              showAlert('success', 'Task Saved', `Task "${obj.subject}" saved successfully`);
-            } else {
-              showAlert('error', 'Save Failed', res.error || 'Unknown error');
-            }
-          })
-          .saveTaskApi(obj);
-      }
-      
+
+      renderTasksTable(tabCache.tasks);
+      showAlert('success', 'Task Saved', `Task "${obj.subject}" saved successfully`);
+    } else {
+      showAlert('error', 'Save Failed', res.error || 'Unknown error');
+    }
+  }).saveTaskApi(obj);
+}
+
       // ===== EMAIL =====
       const emailTemplates = {
         welcome: {
@@ -2942,107 +3300,167 @@ body {
         }
       };
       
-      function initEmail() {
-        loadEmailLog();
+let emailPage = 1;
+const pageSize = 20; // number of emails per page
+
+function initEmail() {
+  // Load cached emails first if available
+  if (tabCache['email']) {
+    renderEmailLog(tabCache['email']);
+  }
+
+  // Refresh button reloads fresh emails
+  const refreshBtn = document.getElementById('refreshEmail');
+  if (refreshBtn) {
+    refreshBtn.onclick = function() {
+      tabCache['email'] = null; // clear cache
+      emailPage = 1; // reset page
+      loadEmailLog();
+    };
+  }
+
+  // Pagination buttons
+  const prevBtn = document.getElementById('prevPageEmail');
+  const nextBtn = document.getElementById('nextPageEmail');
+
+  if (prevBtn) prevBtn.onclick = function() {
+    if (emailPage > 1) {
+      emailPage--;
+      loadEmailLog();
+    }
+  };
+
+  if (nextBtn) nextBtn.onclick = function() {
+    emailPage++;
+    loadEmailLog();
+  };
+
+  // Initial load
+  loadEmailLog();
+}
+
+// === Render Email Log Table ===
+function renderEmailLog(resp) {
+  const tbody = document.getElementById('emailLogTable');
+  tbody.innerHTML = '';
+
+  if (!resp.rows || resp.rows.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No emails yet</td></tr>';
+    document.getElementById('nextPageEmail').disabled = true;
+    return;
+  }
+
+  resp.rows.forEach(function(email) {
+    const tr = document.createElement('tr');
+    const date = new Date(email.timestamp).toLocaleString();
+    const directionClass = email.direction === 'Outbound' ? 'badge-primary' : 'badge-info';
+    tr.innerHTML = `
+      <td>${date}</td>
+      <td><span class="badge ${directionClass}">${email.direction}</span></td>
+      <td>${email.direction === 'Outbound' ? email.to : email.from}</td>
+      <td>${email.subject}</td>
+      <td>${email.snippet || ''}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  // Update page info
+  const pageInfo = document.getElementById('emailPageInfo');
+  if (pageInfo) pageInfo.textContent = `Page ${emailPage}`;
+
+  // Enable/disable prev/next buttons
+  document.getElementById('prevPageEmail').disabled = emailPage === 1;
+  document.getElementById('nextPageEmail').disabled = resp.rows.length < pageSize;
+
+  // Save to cache
+  tabCache['email'] = resp;
+}
+
+// === Load Email Log from server ===
+function loadEmailLog() {
+  const tbody = document.getElementById('emailLogTable');
+  if (tbody) {
+    // Show loading indicator
+    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">Loading...</td></tr>';
+  }
+
+  google.script.run
+    .withSuccessHandler(renderEmailLog)
+    .listEmailLogApi({ page: emailPage, pageSize: pageSize });
+}
+
+window.loadEmailLog = loadEmailLog;
+
+// === Email Composer Functions ===
+function showEmailComposer() {
+  document.getElementById('emailComposer').style.display = 'block';
+}
+window.showEmailComposer = showEmailComposer;
+
+function closeEmailComposer() {
+  document.getElementById('emailComposer').style.display = 'none';
+  document.getElementById('emailTemplate').value = '';
+  document.getElementById('emailTo').value = '';
+  document.getElementById('emailSubject').value = '';
+  document.getElementById('emailBody').innerHTML = '<p>Start typing your email...</p>';
+}
+window.closeEmailComposer = closeEmailComposer;
+
+function loadTemplate() {
+  const templateKey = document.getElementById('emailTemplate').value;
+  if (!templateKey) return;
+  const template = emailTemplates[templateKey];
+  document.getElementById('emailSubject').value = template.subject;
+  document.getElementById('emailBody').innerHTML = template.body;
+}
+window.loadTemplate = loadTemplate;
+
+function formatText(command) {
+  document.execCommand(command, false, null);
+  document.getElementById('emailBody').focus();
+}
+window.formatText = formatText;
+
+function insertLink() {
+  const url = prompt('Enter URL:');
+  if (url) {
+    document.execCommand('createLink', false, url);
+  }
+}
+window.insertLink = insertLink;
+
+function sendEmail() {
+  const to = document.getElementById('emailTo').value;
+  const subject = document.getElementById('emailSubject').value;
+  const body = document.getElementById('emailBody').innerHTML;
+
+  if (!to || !subject) {
+    showAlert('warning', 'Missing Fields', 'Please fill in recipient and subject');
+    return;
+  }
+
+  google.script.run
+    .withSuccessHandler(function(result) {
+      if (result.success) {
+        showAlert('success', 'Email Sent', `Email sent to ${to}`);
+        closeEmailComposer();
+        loadEmailLog(); // refresh log after sending
+      } else {
+        showAlert('error', 'Send Failed', result.error);
       }
-      
-      function showEmailComposer() {
-        document.getElementById('emailComposer').style.display = 'block';
-      }
-      window.showEmailComposer = showEmailComposer;
-      
-      function closeEmailComposer() {
-        document.getElementById('emailComposer').style.display = 'none';
-        document.getElementById('emailTemplate').value = '';
-        document.getElementById('emailTo').value = '';
-        document.getElementById('emailSubject').value = '';
-        document.getElementById('emailBody').innerHTML = '<p>Start typing your email...</p>';
-      }
-      window.closeEmailComposer = closeEmailComposer;
-      
-      function loadTemplate() {
-        const templateKey = document.getElementById('emailTemplate').value;
-        if (!templateKey) return;
-        const template = emailTemplates[templateKey];
-        document.getElementById('emailSubject').value = template.subject;
-        document.getElementById('emailBody').innerHTML = template.body;
-      }
-      window.loadTemplate = loadTemplate;
-      
-      function formatText(command) {
-        document.execCommand(command, false, null);
-        document.getElementById('emailBody').focus();
-      }
-      window.formatText = formatText;
-      
-      function insertLink() {
-        const url = prompt('Enter URL:');
-        if (url) {
-          document.execCommand('createLink', false, url);
-        }
-      }
-      window.insertLink = insertLink;
-      
-      function sendEmail() {
-        const to = document.getElementById('emailTo').value;
-        const subject = document.getElementById('emailSubject').value;
-        const body = document.getElementById('emailBody').innerHTML;
-        
-        if (!to || !subject) {
-          showAlert('warning', 'Missing Fields', 'Please fill in recipient and subject');
-          return;
-        }
-        
-        google.script.run
-          .withSuccessHandler(function(result) {
-            if (result.success) {
-              showAlert('success', 'Email Sent', `Email sent to ${to}`);
-              closeEmailComposer();
-              loadEmailLog();
-            } else {
-              showAlert('error', 'Send Failed', result.error);
-            }
-          })
-          .withFailureHandler(function(error) {
-            showAlert('error', 'Error', error.message);
-          })
-          .sendEmailApi({
-            to: to,
-            subject: subject,
-            htmlBody: body
-          });
-      }
-      window.sendEmail = sendEmail;
-      
-      function loadEmailLog() {
-        google.script.run
-          .withSuccessHandler(function(resp) {
-            const tbody = document.getElementById('emailLogTable');
-            tbody.innerHTML = '';
-            
-            if (!resp.rows || resp.rows.length === 0) {
-              tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No emails yet</td></tr>';
-              return;
-            }
-            
-            resp.rows.forEach(function(email) {
-              const tr = document.createElement('tr');
-              const date = new Date(email.timestamp).toLocaleString();
-              const directionClass = email.direction === 'Outbound' ? 'badge-primary' : 'badge-info';
-              tr.innerHTML = `
-                <td>${date}</td>
-                <td><span class="badge ${directionClass}">${email.direction}</span></td>
-                <td>${email.direction === 'Outbound' ? email.to : email.from}</td>
-                <td>${email.subject}</td>
-                <td>${email.snippet || ''}</td>
-              `;
-              tbody.appendChild(tr);
-            });
-          })
-          .listEmailLogApi({page: 1, pageSize: 20});
-      }
-      window.loadEmailLog = loadEmailLog;
-      
+    })
+    .withFailureHandler(function(error) {
+      showAlert('error', 'Error', error.message);
+    })
+    .sendEmailApi({
+      to: to,
+      subject: subject,
+      htmlBody: body
+    });
+}
+window.sendEmail = sendEmail;
+
+
       // ===== ADMIN =====
       function initAdmin() {
         loadUsers();
@@ -3136,7 +3554,5 @@ body {
     })();
   </script>
 </body>
+
 </html>
-
-
-
