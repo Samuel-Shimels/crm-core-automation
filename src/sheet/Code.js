@@ -1008,7 +1008,7 @@ function saveTaskApi(task) {
   }
 }
 
-// ===== USERS API ===== optimized
+// ===== USERS API =====
 
 function listUsersApi(params) {
   try {
