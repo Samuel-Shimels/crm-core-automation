@@ -1016,6 +1016,61 @@
       background: var(--bg-tertiary);
       color: var(--text-primary);
     }
+    /* ===== CUSTOM COFIRM ===== */
+    .custom-confirm-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+    }
+
+    .custom-confirm-box {
+      background: #fff;
+      padding: 20px 30px;
+      border-radius: 10px;
+      min-width: 300px;
+      max-width: 90%;
+      text-align: center;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+      opacity: 0;
+      transform: translateY(-20px);
+      transition: all 0.3s ease;
+    }
+
+    .confirm-title {
+      font-weight: bold;
+      margin-bottom: 10px;
+      font-size: 18px;
+    }
+
+    .confirm-message {
+      margin-bottom: 20px;
+    }
+
+    .confirm-buttons button {
+      margin: 0 10px;
+      padding: 6px 20px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .confirm-yes {
+      background-color: #28a745;
+      color: white;
+    }
+
+    .confirm-no {
+      background-color: #dc3545;
+      color: white;
+    }
+
 
     /* ===== EMAIL COMPOSER ===== */
     .email-composer {
@@ -2440,6 +2495,60 @@
         }, 5000);
       }
       window.showAlert = showAlert;
+    
+    // ===== CUSTOM CONFIRM SYSTEM =====
+function showConfirm(title, message) {
+  return new Promise((resolve) => {
+    // Overlay
+    const overlay = document.createElement('div');
+    overlay.className = 'custom-confirm-overlay';
+
+    // Confirm box
+    const confirmBox = document.createElement('div');
+    confirmBox.className = 'custom-confirm-box';
+    confirmBox.innerHTML = `
+      <div class="confirm-title">${title}</div>
+      <div class="confirm-message">${message}</div>
+      <div class="confirm-buttons">
+        <button class="confirm-yes">Yes</button>
+        <button class="confirm-no">No</button>
+      </div>
+    `;
+
+    overlay.appendChild(confirmBox);
+    document.body.appendChild(overlay);
+
+    // Animate in
+    requestAnimationFrame(() => {
+      confirmBox.style.transform = 'translateY(0)';
+      confirmBox.style.opacity = '1';
+    });
+
+    // Button actions
+    confirmBox.querySelector('.confirm-yes').addEventListener('click', () => {
+      // Animate out
+      confirmBox.style.transform = 'translateY(-20px)';
+      confirmBox.style.opacity = '0';
+      setTimeout(() => {
+        overlay.remove();
+        resolve(true);
+      }, 300);
+    });
+
+    confirmBox.querySelector('.confirm-no').addEventListener('click', () => {
+      confirmBox.style.transform = 'translateY(-20px)';
+      confirmBox.style.opacity = '0';
+      setTimeout(() => {
+        overlay.remove();
+        resolve(false);
+      }, 300);
+    });
+  });
+}
+
+// Make it globally accessible like showAlert
+window.showConfirm = showConfirm;
+
 
       // ===== PRELOAD ==========
       function preloadAllPages() {
@@ -2524,9 +2633,10 @@
           })
           .loginUser(email, password);
       }
-      
-      function handleLogout() {
-        if (confirm('Are you sure you want to logout?')) {
+
+      async function handleLogout() {
+        const confirmed = await showConfirm('Confirm Logout', 'Are you sure you want to logout?');
+        if (confirmed) {
           currentUser = null;
           localStorage.removeItem('crmUser');
           showLogin();
@@ -2534,6 +2644,7 @@
           showAlert('info', 'Logged Out', 'You have been logged out successfully');
         }
       }
+
       
       function checkStoredLogin() {
   const stored = localStorage.getItem('crmUser');
@@ -3462,21 +3573,36 @@ window.sendEmail = sendEmail;
 
 
       // ===== ADMIN =====
+        
       function initAdmin() {
         loadUsers();
-        document.getElementById('initBtn').onclick = function() {
-          if (confirm('Initialize CRM sheets? This will create the database structure.')) {
+
+        document.getElementById('initBtn').onclick = async function() {
+          const confirmed = await showConfirm(
+            'Initialize CRM Sheets',
+            'Initialize CRM sheets? This will create the database structure.'
+          );
+          if (confirmed) {
             google.script.run.withSuccessHandler(function() {
               showAlert('success', 'Initialized', 'Sheets initialized successfully!');
               loadUsers();
             }).initCrmSheetsApi();
           }
         };
-        document.getElementById('initDemoBtn').onclick = function() {
-          if (confirm('Load demo data? This will add sample records.')) {
+
+        document.getElementById('initDemoBtn').onclick = async function() {
+          const confirmed = await showConfirm(
+            'Load Demo Data',
+            'Load demo data? This will add sample records.'
+          );
+          if (confirmed) {
             google.script.run.withSuccessHandler(function(res) {
               if (res.success) {
-                showAlert('success', 'Demo Data Loaded', `${res.counts.companies} companies, ${res.counts.contacts} contacts, ${res.counts.deals} deals, ${res.counts.tasks} tasks added`);
+                showAlert(
+                  'success',
+                  'Demo Data Loaded',
+                  `${res.counts.companies} companies, ${res.counts.contacts} ${res.counts.contacts === 1 ? 'contact' : 'contacts'}, ${res.counts.deals} deals, ${res.counts.tasks} tasks added`
+                );
                 loadUsers();
               } else {
                 showAlert('error', 'Load Failed', res.error || 'Unknown error');
@@ -3484,17 +3610,19 @@ window.sendEmail = sendEmail;
             }).initDemoDataApi();
           }
         };
+
         document.getElementById('newUserBtn').onclick = function() {
-          ['uEmail','uName','uRole'].forEach(id => {
+          ['uEmail', 'uName', 'uRole'].forEach(id => {
             const el = document.getElementById(id);
-            if(el) el.value = id === 'uRole' ? 'User' : '';
+            if (el) el.value = id === 'uRole' ? 'User' : '';
           });
           document.getElementById('uActive').checked = true;
           new bootstrap.Modal(document.getElementById('userModal')).show();
         };
+
         document.getElementById('saveUserBtn').onclick = saveUser;
       }
-      
+
       function loadUsers() {
         const tbody = document.getElementById('usersTbody');
         tbody.innerHTML = '<tr><td colspan="4" class="text-center">Loading...</td></tr>';
